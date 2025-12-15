@@ -29,15 +29,21 @@ export default function SilverButton({
       type={type}
       className="
         rounded-full
-        bg-gradient-to-r from-gray-200 via-gray-400 to-gray-600
-        text-black font-bold
-        px-6 py-3
-        shadow-lg
-        transform transition
-        hover:scale-110 active:scale-95
-        hover:shadow-2xl
+        border border-[1px]
+        border-gradient-to-r from-red-600 via-orange-500 to-red-700
+        bg-gradient-to-r from-blue-100 via-blue-200 to-blue-300
+        italic font-light
+        px-8 py-2
+        shadow-md
+        transition-transform
+        hover:scale-105 active:scale-95
         focus:outline-none
       "
+      style={{
+        borderImage: "linear-gradient(90deg, #ff0000, #ff7f00) 1",
+        borderWidth: "1px",
+        borderStyle: "solid",
+      }}
     >
       {children}
     </button>
