@@ -1,4 +1,4 @@
-const CV = require("../models/cv");
+const CV = require("../models/CV"); // ✅ Case-sensitive import
 const path = require("path");
 const fs = require("fs");
 
