@@ -1,2 +1,21 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# সব text ফাইলকে LF line endings enforce করো
+* text=auto eol=lf
+
+# Windows batch files CRLF ending এ রাখো
+*.bat text eol=crlf
+
+# Shell scripts LF ending এ রাখো
+*.sh text eol=lf
+
+# JSON, JS, TS ফাইলগুলো LF ending এ রাখো
+*.json text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+
+# বড় ফাইলগুলো Git LFS দিয়ে track করো
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
