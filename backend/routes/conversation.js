@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-const Conversation = require("../models/conversation");
+const Conversation = require("../models/Conversation");
 const Message = require("../models/message");
 const Notification = require("../models/Notification");
 
