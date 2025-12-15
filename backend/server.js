@@ -1,3 +1,6 @@
+// ==========================
+// ✅ Environment Config
+// ==========================
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -10,9 +13,16 @@ const fs = require("fs");
 const http = require("http");
 const { Server } = require("socket.io");
 
-const Conversation = require("./models/conversation");
+// ==========================
+// ✅ Models
+// ==========================
+const Conversation = require("./models/Conversation");
 const Message = require("./models/message");
+const Status = require("./models/Status");
 
+// ==========================
+// ✅ Express + HTTP Server
+// ==========================
 const app = express();
 const server = http.createServer(app);
 
