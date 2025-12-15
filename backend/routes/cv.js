@@ -1,9 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const CV = require("../models/cv"); // ✅ CV model import
-const User = require("../models/User"); // ✅ User model import
-const upload = require("../middleware/upload"); // ✅ Multer middleware
+
+// ✅ CV model import (case-sensitive fix)
+const CV = require("../models/CV");
+
+// ✅ User model import
+const User = require("../models/User");
+
+// ✅ Multer middleware
+const upload = require("../middleware/upload");
+
+// ✅ Controller functions
 const { uploadCV, deleteCV, getMyCV } = require("../Controller/cvController");
 
 // ==========================
