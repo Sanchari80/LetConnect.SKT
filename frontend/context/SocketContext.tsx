@@ -1,5 +1,3 @@
-"use client";
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
@@ -10,22 +8,19 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    // ✅ Backend URL check
     const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
     if (!backendURL) {
       console.error("❌ Socket backend URL missing (NEXT_PUBLIC_BACKEND_URL)");
       return;
     }
 
-    // ✅ Socket connect
     const newSocket = io(backendURL, {
       withCredentials: true,
       transports: ["websocket"],
-      reconnectionAttempts: 5, // auto reconnect max 5 times
-      reconnectionDelay: 2000, // 2s delay between retries
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
     });
 
-    // ✅ Event listeners (optional)
     newSocket.on("connect", () => {
       console.log("🔌 Socket connected:", newSocket.id);
     });
@@ -40,7 +35,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     setSocket(newSocket);
 
-    // ✅ Cleanup
     return () => {
       newSocket.disconnect();
     };
@@ -53,7 +47,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// ✅ Hook export
 export const useSocket = () => {
   const context = useContext(SocketContext);
   if (context === null) {
