@@ -2,8 +2,8 @@
 module.exports = function(requiredRole) {
   return (req, res, next) => {
     try {
-      // User object থেকে Role নাও
-      const userRole = req.user?.Role;
+      // User object থেকে role নাও (ছোট হাতের)
+      const userRole = req.user?.role;
 
       if (!userRole) {
         return res.status(403).json({ error: "User role not found" });
