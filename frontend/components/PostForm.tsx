@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../utils/api"; // ✅ use shared axios instance
 
 interface Props {
   refreshFeed: () => void;
@@ -32,21 +32,16 @@ const PostForm: React.FC<Props> = ({ refreshFeed }) => {
 
     try {
       setLoading(true);
-      // ✅ Use backend base URL from env
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/status`,
-        formData,
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      // ✅ Use api instance
+      await api.post("/status", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       setText("");
       setImages(null);
       setVideo(null);
       refreshFeed(); // reload feed after new post
-    } catch (err) {
-      console.error("❌ Post create error:", err);
+    } catch (err: any) {
+      console.error("❌ Post create error:", err.response?.data || err.message);
     } finally {
       setLoading(false);
     }

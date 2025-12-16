@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import api from "../utils/axios"; // ✅ use axios instance
+import api from "../utils/api"; // ✅ axios instance
 
 // ✅ Helper for media URLs
 const getMediaURL = (path: string) => {
@@ -8,18 +8,32 @@ const getMediaURL = (path: string) => {
   return `${base}${path}`;
 };
 
+interface Ad {
+  _id: string;
+  title: string;
+  content: string;
+  image?: string;
+}
+
 export default function AdvertiseSection() {
-  const [ads, setAds] = useState<any[]>([]);
-  const [selectedAd, setSelectedAd] = useState<any | null>(null);
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const fetchAds = async () => {
       try {
+        setLoading(true);
+        setError("");
         // ✅ backend route is /api/advertise/all
         const res = await api.get("/advertise/all");
         setAds(res.data);
       } catch (err: any) {
         console.error("❌ Advertise fetch error:", err.response?.data || err.message);
+        setError(err.response?.data?.error || "Failed to load advertisements");
+      } finally {
+        setLoading(false);
       }
     };
     fetchAds();
@@ -31,34 +45,47 @@ export default function AdvertiseSection() {
         📣 Skill Development and Opportunities
       </h2>
 
+      {/* ✅ Loading state */}
+      {loading && (
+        <div className="flex justify-center items-center py-6">
+          <span className="w-6 h-6 border-4 border-purple-400 border-t-transparent rounded-full animate-spin"></span>
+          <span className="ml-3 italic text-sm text-gray-300">Loading ads...</span>
+        </div>
+      )}
+
+      {/* ✅ Error message */}
+      {error && (
+        <p className="text-red-400 italic text-center mb-4">{error}</p>
+      )}
+
       {/* ✅ Ads Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {ads.map((ad) => (
-          <div
-            key={ad._id}
-            onClick={() => setSelectedAd(ad)}
-            className="cursor-pointer p-4 bg-gray-800 rounded hover:bg-purple-800 transition"
-          >
-            <h3 className="text-lg font-semibold">{ad.title}</h3>
-            <p className="text-sm text-gray-300 mt-2 line-clamp-2">
-              {ad.content}
-            </p>
-          </div>
-        ))}
-      </div>
+      {!loading && !error && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {ads.map((ad) => (
+            <div
+              key={ad._id}
+              onClick={() => setSelectedAd(ad)}
+              className="cursor-pointer p-4 bg-gray-800 rounded hover:bg-purple-800 transition"
+            >
+              {/* Title always visible */}
+              <h3 className="text-lg font-semibold text-purple-300">{ad.title}</h3>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ✅ Selected Ad Details */}
       {selectedAd && (
         <div className="mt-6 p-4 bg-gray-700 rounded">
-          <h3 className="text-xl font-bold">{selectedAd.title}</h3>
-          <p className="mt-2">{selectedAd.content}</p>
+          <h3 className="text-xl font-bold text-purple-200">{selectedAd.title}</h3>
           {selectedAd.image && (
             <img
               src={getMediaURL(selectedAd.image)}
-              alt="Ad"
-              className="mt-4 rounded shadow-lg"
+              alt="Ad Poster"
+              className="mt-4 w-full h-auto rounded shadow-lg"
             />
           )}
+          <p className="mt-2">{selectedAd.content}</p>
           <button
             onClick={() => setSelectedAd(null)}
             className="mt-4 px-4 py-2 bg-purple-600 rounded hover:bg-purple-700"

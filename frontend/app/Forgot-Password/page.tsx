@@ -1,14 +1,17 @@
 "use client";
 import { useState } from "react";
 import api from "@/utils/api";
+import LoadingButton from "@/components/LoadingButton";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
+    setLoading(true);
 
     try {
       const res = await api.post("/auth/forgot-password", { email });
@@ -16,6 +19,8 @@ export default function ForgotPasswordPage() {
     } catch (err: any) {
       console.error("❌ Forgot password error:", err.response?.data || err.message);
       setMessage(`❌ Error: ${err.response?.data?.error || "Failed to send reset link"}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,9 +36,13 @@ export default function ForgotPasswordPage() {
           required
           className="border p-2 rounded bg-gray-800 text-white"
         />
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 py-2 rounded">
+        <LoadingButton
+          type="submit"
+          loading={loading}
+          className="bg-blue-600 hover:bg-blue-700 py-2 rounded"
+        >
           Send Reset Link
-        </button>
+        </LoadingButton>
       </form>
       {message && <p className="mt-4 text-center">{message}</p>}
     </div>

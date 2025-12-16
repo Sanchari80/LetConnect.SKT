@@ -1,6 +1,6 @@
 "use client";
-import axios from "axios";
 import { useState } from "react";
+import api from "../utils/api"; // ✅ use shared axios instance
 
 export default function ProfileCard({ user, currentUser }: { user: any; currentUser: any }) {
   const [status, setStatus] = useState<string>(user.status || "pending");
@@ -15,13 +15,13 @@ export default function ProfileCard({ user, currentUser }: { user: any; currentU
   const handleAccept = async (id: string) => {
     try {
       setLoading(true);
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/conversation/${id}/accept`);
+      await api.post(`/conversation/${id}/accept`);
       setStatus("accepted");
 
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notifications`, {
+      await api.post(`/notifications`, {
         user: user._id,
         type: "request",
-        fromUser: currentUser._id, // logged-in user id
+        fromUser: currentUser._id,
         message: "accepted your LetConnect request",
       });
 
@@ -38,10 +38,10 @@ export default function ProfileCard({ user, currentUser }: { user: any; currentU
   const handleReject = async (id: string) => {
     try {
       setLoading(true);
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/conversation/${id}/reject`);
+      await api.post(`/conversation/${id}/reject`);
       setStatus("rejected");
 
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notifications`, {
+      await api.post(`/notifications`, {
         user: user._id,
         type: "request",
         fromUser: currentUser._id,
@@ -62,7 +62,7 @@ export default function ProfileCard({ user, currentUser }: { user: any; currentU
     if (!profileFile) return;
     const formData = new FormData();
     formData.append("profileImage", profileFile);
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/profile/upload-image`, formData, {
+    await api.post(`/profile/upload-image`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     alert("✅ Profile picture updated!");
@@ -76,7 +76,7 @@ export default function ProfileCard({ user, currentUser }: { user: any; currentU
     Array.from(imageFiles).forEach((file) => {
       formData.append("Image", file);
     });
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/status/upload-images`, formData, {
+    await api.post(`/status/upload-images`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     alert("✅ Images uploaded!");
@@ -88,7 +88,7 @@ export default function ProfileCard({ user, currentUser }: { user: any; currentU
     if (!videoFile) return;
     const formData = new FormData();
     formData.append("Video", videoFile);
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/status/upload-video`, formData, {
+    await api.post(`/status/upload-video`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     alert("✅ Video uploaded!");

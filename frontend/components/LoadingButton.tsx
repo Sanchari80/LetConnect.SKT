@@ -1,48 +1,51 @@
 "use client";
-import React, { useState } from "react";
+import React, { ReactNode } from "react";
 
-interface LoadingButtonProps {
-  onClick?: () => Promise<void> | void;
-  label?: string;
+interface LoadingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  loading?: boolean;
+  children?: ReactNode;
 }
 
 const LoadingButton: React.FC<LoadingButtonProps> = ({
-  onClick,
-  label = "SKT",
+  loading = false,
+  children = "Wait..",
+  className = "",
+  ...props
 }) => {
-  const [loading, setLoading] = useState(false);
-
-  const handleClick = async () => {
-    setLoading(true);
-    try {
-      if (onClick) {
-        await onClick();
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <button
-      onClick={handleClick}
-      disabled={loading}
+      {...props}
+      disabled={loading || props.disabled}
       className={`
-        relative px-6 sm:px-12 py-3 sm:py-4 rounded-3xl flex items-center justify-center
+        relative px-8 py-3 rounded-full flex items-center justify-center
         transition-transform duration-300
         ${loading ? "cursor-not-allowed opacity-70" : "hover:scale-105"}
-        bg-gradient-to-r from-purple-600 to-gray-400
-        shadow-[0_0_15px_rgba(156,0,255,0.6)]
+        bg-black text-white overflow-hidden
+        ${className}
       `}
     >
-      {loading && (
-        <span className="absolute left-3 sm:left-4 w-5 sm:w-6 h-5 sm:h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></span>
-      )}
-      <span className="relative italic text-xs sm:text-sm tracking-wider text-white">
-        {label}
+      {/* Electric glowing capsule border */}
+      <span
+        className="absolute inset-0 rounded-full border-4 animate-pulse"
+        style={{
+          borderImage: "linear-gradient(90deg, red, orange, blue, red) 1",
+          boxShadow:
+            "0 0 10px rgba(255,0,0,0.8), 0 0 20px rgba(255,165,0,0.8), 0 0 30px rgba(0,0,255,0.8)",
+        }}
+      ></span>
+
+      {/* Glitching italic text */}
+      <span
+        className="relative italic text-lg tracking-wider glitch-text"
+        data-text={children}
+      >
+        {children}
       </span>
+
+      {/* Spinner when loading */}
+      {loading && (
+        <span className="absolute left-3 w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></span>
+      )}
     </button>
   );
 };

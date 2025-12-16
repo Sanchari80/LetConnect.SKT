@@ -57,6 +57,14 @@ export default function Header() {
             👤 Profile
           </button>
 
+          {/* ✅ Advertise */}
+          <button
+            onClick={() => router.push("/advertise")}
+            className="hover:text-pink-400"
+          >
+            📣 Advertise
+          </button>
+
           {/* Search */}
           <input
             type="text"

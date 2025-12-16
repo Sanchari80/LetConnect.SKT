@@ -27,25 +27,27 @@ export default function SilverButton({
     <button
       onClick={playSound}
       type={type}
-      className="
-        rounded-full
-        border border-[1px]
-        border-gradient-to-r from-red-600 via-orange-500 to-red-700
-        bg-gradient-to-r from-blue-100 via-blue-200 to-blue-300
-        italic font-light
-        px-8 py-2
-        shadow-md
-        transition-transform
+      className={`
+        relative rounded-full px-8 py-2
+        italic text-xs tracking-wider
+        bg-gradient-to-r from-gray-200 via-gray-300 to-gray-400
+        text-white font-light
+        transition-transform duration-300
         hover:scale-105 active:scale-95
         focus:outline-none
-      "
+        shadow-[0_0_15px_rgba(128,0,128,0.7)]
+        overflow-hidden
+      `}
       style={{
-        borderImage: "linear-gradient(90deg, #ff0000, #ff7f00) 1",
-        borderWidth: "1px",
+        borderImage: "linear-gradient(90deg, silver, purple, #ff00ff, #800080) 1",
+        borderWidth: "2px",
         borderStyle: "solid",
       }}
     >
-      {children}
+      {/* Glitch effect wrapper */}
+      <span className="glitch-text" data-text={children}>
+        {children}
+      </span>
     </button>
   );
 }

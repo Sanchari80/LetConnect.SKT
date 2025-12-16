@@ -10,18 +10,40 @@ body {
   background: linear-gradient(135deg, #2e0854, #4b0082, #6a0dad); /* purple gradient */
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* ✅ Title glitch effect (only applied via class) */
+/* ✅ Title glitch effect */
 .glitch-title {
+  position: relative;
+  font-style: italic;
   text-shadow:
     0 0 6px rgba(192,192,192,0.6),
     0 0 12px rgba(192,192,192,0.889),
     0 0 18px rgba(192,192,192,0.915);
-  animation: glitch 2s infinite;
+  animation: glitch-title 2s infinite;
 }
 
-@keyframes glitch {
+.glitch-title::before,
+.glitch-title::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  color: #ff00ff; /* magenta glitch layer */
+  clip: rect(0, 900px, 0, 0);
+  animation: glitch-layer 3s infinite linear alternate-reverse;
+}
+
+.glitch-title::after {
+  color: #00ffff; /* cyan glitch layer */
+  animation: glitch-layer 2s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-title {
   0% { text-shadow: 2px 2px #c0c0c0, -2px -2px #4b0082; }
   25% { text-shadow: -2px 2px #c0c0c0, 2px -2px #6a0dad; }
   50% { text-shadow: 2px -2px #c0c0c0, -2px 2px #4b0082; }
@@ -29,18 +51,28 @@ body {
   100% { text-shadow: 2px 2px #c0c0c0, -2px -2px #4b0082; }
 }
 
+@keyframes glitch-layer {
+  0% { clip: rect(0, 900px, 0, 0); }
+  20% { clip: rect(5px, 900px, 25px, 0); }
+  40% { clip: rect(10px, 900px, 40px, 0); }
+  60% { clip: rect(15px, 900px, 30px, 0); }
+  80% { clip: rect(8px, 900px, 20px, 0); }
+  100% { clip: rect(0, 900px, 0, 0); }
+}
+
 /* ✅ Footer logo (centered above text) */
 .skt-footer-logo {
   display: block;
-  margin: 0 auto 8px auto; /* center + gap below */
+  margin: 0 auto 8px auto;
   width: 60px;
   height: auto;
   opacity: 0.9;
-  transition: transform 0.3s ease;
-  filter: drop-shadow(0 0 6px rgba(192,192,255,0.6));
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: drop-shadow(0 0 8px rgba(192,192,255,0.8));
 }
 .skt-footer-logo:hover {
-  transform: rotate(-5deg) scale(1.05);
+  transform: rotate(-5deg) scale(1.1);
+  filter: drop-shadow(0 0 15px rgba(255,0,255,0.9));
 }
 
 /* ✅ Floating logo (non-landing pages only) */
@@ -52,10 +84,10 @@ body {
   height: auto;
   opacity: 0.85;
   z-index: 50;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 .skt-floating-logo:hover {
-  transform: scale(1.1);
+  transform: scale(1.15) rotate(3deg);
   opacity: 1;
-  filter: drop-shadow(0 0 10px rgba(192,192,255,0.8));
+  filter: drop-shadow(0 0 15px rgba(255,0,255,0.9));
 }
