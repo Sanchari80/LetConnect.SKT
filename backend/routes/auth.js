@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const nodemailer = require("nodemailer"); // 👈 reset link পাঠানোর জন্য
 
 // ==========================
 // ✅ Middleware: verifyToken
@@ -120,7 +121,7 @@ router.get("/me", verifyToken, async (req, res) => {
 });
 
 // ==========================
-// ✅ Change Password
+// ✅ Change Password (logged in)
 // ==========================
 router.put("/change-password", verifyToken, async (req, res) => {
   try {
@@ -147,6 +148,72 @@ router.put("/change-password", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("❌ Change password error:", err.message);
     res.status(500).json({ error: "Password change failed" });
+  }
+});
+
+// ==========================
+// ✅ Forgot Password (send reset link)
+// ==========================
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Reset token তৈরি করো
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    // Reset link
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+    // Email পাঠানো (nodemailer দিয়ে)
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Password Reset",
+      text: `Click here to reset your password: ${resetLink}`,
+    });
+
+    res.json({ message: "✅ Reset link sent to your email" });
+  } catch (err) {
+    console.error("❌ Forgot password error:", err.message);
+    res.status(500).json({ error: "Failed to send reset link" });
+  }
+});
+
+// ==========================
+// ✅ Reset Password (via token)
+// ==========================
+router.post("/reset-password/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded || !decoded._id) {
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+
+    const user = await User.findById(decoded._id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: "✅ Password reset successful" });
+  } catch (err) {
+    console.error("❌ Reset password error:", err.message);
+    res.status(500).json({ error: "Failed to reset password" });
   }
 });
 
