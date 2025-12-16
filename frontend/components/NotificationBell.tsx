@@ -1,35 +1,9 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState } from "react";
+import { useNotifications } from "../context/NotificationContext"; // 👈 Context import
 
-interface Notification {
-  _id: string;
-  type: string;
-  message: string;
-  fromUser?: { Name: string; ProfileImage?: string };
-  post?: { content: string };
-  isRead: boolean;
-  createdAt: string;
-}
-
-const NotificationBell: React.FC<{ userId: string }> = ({ userId }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+const NotificationBell: React.FC = () => {
+  const { notifications, unreadCount, soundEnabled, toggleSound } = useNotifications();
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/notifications/${userId}`
-        );
-        setNotifications(res.data);
-      } catch (err) {
-        console.error("❌ Notification fetch error:", err);
-      }
-    };
-    fetchNotifications();
-  }, [userId]);
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <div className="relative">
@@ -48,7 +22,17 @@ const NotificationBell: React.FC<{ userId: string }> = ({ userId }) => {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-lg p-2 z-50">
+        <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-lg p-2 z-50">
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm font-bold">Notifications</p>
+            <button
+              onClick={toggleSound}
+              className="text-xs bg-gray-200 px-2 py-1 rounded"
+            >
+              {soundEnabled ? "🔊 Mute" : "🔇 Unmute"}
+            </button>
+          </div>
+
           {notifications.length === 0 ? (
             <p className="text-gray-500 text-sm">No notifications</p>
           ) : (
@@ -60,7 +44,8 @@ const NotificationBell: React.FC<{ userId: string }> = ({ userId }) => {
                 }`}
               >
                 <p className="text-sm">
-                  <strong>{n.fromUser?.Name || "Someone"}</strong> {n.message}
+                  <strong>{n.fromUser?.username || "Someone"}</strong>{" "}
+                  {n.message}
                 </p>
                 <span className="text-xs text-gray-500">
                   {new Date(n.createdAt).toLocaleString()}
