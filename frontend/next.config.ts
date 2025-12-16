@@ -1,7 +1,11 @@
-const nextConfig = {
-  reactStrictMode: true,
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
   experimental: {
-    serverActions: true, // ✅ valid
+    serverActions: {
+      bodySizeLimit: "2mb", // optional
+      allowedOrigins: ["*"], // optional
+    },
   },
 };
 
