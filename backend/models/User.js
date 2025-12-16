@@ -11,14 +11,19 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true, // ✅ শুধু email lowercase হবে
+      lowercase: true, // ✅ সব email lowercase হবে
     },
     password: {
       type: String,
       required: true,
     },
     role: {
-      type: String, // profession (e.g., Developer, Designer, Student)
+      type: String,
+      enum: ["user", "admin", "moderator"], // ✅ system roles
+      default: "user",                      // signup এ সবসময় user হবে
+    },
+    profession: {
+      type: String, // e.g., Developer, Designer, Student
       trim: true,
     },
     skills: [
@@ -38,6 +43,10 @@ const UserSchema = new mongoose.Schema(
     contact: {
       type: String,
     },
+    blocked: {
+      type: Boolean, // ✅ admin block/unblock করতে পারবে
+      default: false,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
@@ -47,6 +56,6 @@ const UserSchema = new mongoose.Schema(
 );
 
 // ✅ Indexes for faster search
-UserSchema.index({ username: "text", role: "text", skills: "text" });
+UserSchema.index({ username: "text", profession: "text", skills: "text" });
 
 module.exports = mongoose.model("User", UserSchema);

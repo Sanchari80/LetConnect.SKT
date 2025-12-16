@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const Advertise = require("../models/Advertise"); // ✅ Make sure this model exists
+const Advertise = require("../models/Advertise");
+const Notification = require("../models/Notification");
 
 // ==========================
-// ✅ Create an advertisement
+// ✅ Create an advertisement request (approved=false)
 // ==========================
 router.post("/", authMiddleware, async (req, res) => {
   try {
@@ -15,10 +16,20 @@ router.post("/", authMiddleware, async (req, res) => {
       title,
       description,
       link,
+      approved: false, // 👈 default false
     });
 
     const savedAd = await ad.save();
-    res.status(201).json({ message: "✅ Advertisement created", ad: savedAd });
+
+    // ✅ Notification for requester (নিজের কাছে যাবে)
+    await Notification.create({
+      user: req.user._id,
+      type: "advertise",
+      fromUser: req.user._id,
+      message: `Your advertise request "${title}" has been submitted`,
+    });
+
+    res.status(201).json({ message: "✅ Advertisement request submitted", ad: savedAd });
   } catch (err) {
     console.error("❌ Advertise create error:", err.message);
     res.status(500).json({ error: "Server error" });
@@ -26,11 +37,11 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 // ==========================
-// ✅ Get all advertisements
+// ✅ Get all approved advertisements (public)
 // ==========================
 router.get("/", async (req, res) => {
   try {
-    const ads = await Advertise.find().populate("user", "username email");
+    const ads = await Advertise.find({ approved: true }).populate("user", "username email");
     res.status(200).json(ads);
   } catch (err) {
     console.error("❌ Advertise fetch error:", err.message);
@@ -39,7 +50,20 @@ router.get("/", async (req, res) => {
 });
 
 // ==========================
-// ✅ Delete an advertisement
+// ✅ Get my own advertisements (user dashboard)
+// ==========================
+router.get("/my", authMiddleware, async (req, res) => {
+  try {
+    const ads = await Advertise.find({ user: req.user._id }).sort({ createdAt: -1 });
+    res.status(200).json(ads);
+  } catch (err) {
+    console.error("❌ My Advertise fetch error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ==========================
+// ✅ Delete my own advertisement request
 // ==========================
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
@@ -51,6 +75,15 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     }
 
     await ad.deleteOne();
+
+    // ✅ Notification for requester (নিজের কাছে যাবে)
+    await Notification.create({
+      user: req.user._id,
+      type: "advertise",
+      fromUser: req.user._id,
+      message: `Your advertise "${ad.title}" has been deleted`,
+    });
+
     res.json({ message: "✅ Advertisement deleted" });
   } catch (err) {
     console.error("❌ Advertise delete error:", err.message);

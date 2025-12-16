@@ -20,36 +20,15 @@ function verifyToken(req, res, next) {
 }
 
 // ✅ Get notifications for logged-in user only
-router.get("/", verifyToken, async (req, res) => {
+router.get("/notifications", verifyToken, async (req, res) => {
   try {
     const notifications = await Notification.find({ user: req.user._id })
-      .populate("fromUser", "username profileImage")
-      .populate("post", "content")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .populate("fromUser", "username email");
 
     res.json(notifications);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch notifications" });
-  }
-});
-
-// ✅ Mark notification as read
-router.post("/:id/read", verifyToken, async (req, res) => {
-  try {
-    const notif = await Notification.findById(req.params.id);
-    if (!notif) return res.status(404).json({ error: "Notification not found" });
-
-    // ✅ Ensure only owner can mark as read
-    if (notif.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
-
-    notif.isRead = true;
-    await notif.save();
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to mark as read" });
   }
 });
 

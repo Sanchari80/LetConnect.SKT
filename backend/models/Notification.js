@@ -1,17 +1,40 @@
 const mongoose = require("mongoose");
 
-const NotificationSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // যাকে notification যাবে
-  type: { 
-    type: String, 
-    enum: ["request", "message", "like", "comment", "share"], 
-    required: true 
+const NotificationSchema = new mongoose.Schema(
+  {
+    // যাকে notification যাবে
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
+    // notification type
+    type: {
+      type: String,
+      enum: [
+        "request",
+        "message",
+        "like",
+        "comment",
+        "share",
+        "advertise_approved",
+        "advertise_rejected"
+      ], // 👈 advertise approve/reject আলাদা করে যোগ করা হলো
+      required: true,
+    },
+
+    // কে action করেছে (admin/moderator/user)
+    fromUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    // optional post reference (like/comment/share এর জন্য)
+    post: { type: mongoose.Schema.Types.ObjectId, ref: "Post" },
+
+    // custom message
+    message: { type: String, trim: true },
+
+    // read/unread status
+    isRead: { type: Boolean, default: false },
+
+    createdAt: { type: Date, default: Date.now },
   },
-  fromUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // কে action করেছে
-  post: { type: mongoose.Schema.Types.ObjectId, ref: "Post" }, // optional (like/comment/share এর জন্য)
-  message: { type: String }, // custom text
-  isRead: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
-});
+  { collection: "notifications" }
+);
 
 module.exports = mongoose.model("Notification", NotificationSchema);

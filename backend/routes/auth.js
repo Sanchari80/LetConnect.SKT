@@ -23,7 +23,17 @@ function verifyToken(req, res, next) {
 }
 
 // ==========================
-// ✅ Signup
+// ✅ Middleware: checkAdmin
+// ==========================
+function checkAdmin(req, res, next) {
+  if (req.user && req.user.role === "admin") {
+    return next();
+  }
+  return res.status(403).json({ error: "Forbidden: Admins only" });
+}
+
+// ==========================
+// ✅ Signup (force user role)
 // ==========================
 router.post("/signup", async (req, res) => {
   try {
@@ -46,11 +56,11 @@ router.post("/signup", async (req, res) => {
       username,
       email,
       password: hashedPassword,
+      role: "user", // 👈 সবসময় user হবে
     });
 
     await user.save();
 
-    // return safe user without password
     const safeUser = await User.findById(user._id).select("-password");
 
     res.status(201).json({ message: "✅ Signup successful", user: safeUser });
@@ -79,7 +89,7 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
 
-    // ✅ Generate JWT with _id
+    // ✅ JWT payload এ role থাকবে
     const token = jwt.sign(
       { _id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -126,7 +136,8 @@ router.put("/change-password", verifyToken, async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).json({ error: "Old password incorrect" });
+    if (!isMatch)
+      return res.status(400).json({ error: "Old password incorrect" });
 
     const hashed = await bcrypt.hash(newPassword, 10);
     user.password = hashed;
@@ -136,6 +147,19 @@ router.put("/change-password", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("❌ Change password error:", err.message);
     res.status(500).json({ error: "Password change failed" });
+  }
+});
+
+// ==========================
+// ✅ Admin-only Example Route
+// ==========================
+router.get("/admin/dashboard", verifyToken, checkAdmin, async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json({ message: "✅ Admin dashboard", users });
+  } catch (err) {
+    console.error("❌ Admin route error:", err.message);
+    res.status(500).json({ error: "Failed to fetch admin data" });
   }
 });
 

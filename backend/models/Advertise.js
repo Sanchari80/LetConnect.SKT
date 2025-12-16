@@ -6,6 +6,7 @@ const advertiseSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     link: { type: String, trim: true },
+    approved: { type: Boolean, default: false }, // 👈 নতুন field
     createdAt: { type: Date, default: Date.now },
   },
   { collection: "advertisements" }

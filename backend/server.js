@@ -81,7 +81,12 @@ app.use("/api/status", require("./routes/statusRoutes"));
 app.use("/api/connect", require("./routes/connectRoutes"));
 app.use("/api/conversation", require("./routes/conversation"));
 app.use("/api/post", require("./routes/post"));
-app.use("/api/notifications", require("./routes/notification"));
+
+// 🔔 Notifications (user-specific + admin control)
+app.use("/api/notifications", require("./routes/notification")); // user notifications
+app.use("/api/admin", require("./routes/adminControl")); // admin/moderator routes
+
+// 📢 Advertise system
 app.use("/api/advertise", require("./routes/advertise"));
 
 // ==========================
