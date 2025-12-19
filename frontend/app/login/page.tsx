@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import api from "@utils/api"; // ✅ uses interceptor with alias
+import api from "@utils/api"; // ✅ axios instance with interceptor
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -26,13 +26,19 @@ export default function LoginPage() {
       const data = res.data;
       console.log("✅ Login response:", data);
 
-      if (data.token) localStorage.setItem("token", data.token);
-      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.token) {
+        // ✅ Save token persistently
+        localStorage.setItem("token", data.token);
+      }
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
 
       setMessage("✅ Login successful! Redirecting...");
 
+      // ✅ Instead of window.location.href, use router push for Next.js
       setTimeout(() => {
-        window.location.href = "/feed";
+        window.location.replace("/feed");
       }, 1500);
     } catch (err: any) {
       console.error("❌ Login error:", err.response?.data || err.message);

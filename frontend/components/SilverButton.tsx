@@ -14,7 +14,7 @@ export default function SilverButton({
 }: SilverButtonProps) {
   const playSound = () => {
     try {
-      const audio = new Audio("/click.mp3");
+      const audio = new Audio("/click.mp3"); // ✅ Sound.tsx এর মতো কাজ করবে
       audio.play().catch((err) => console.error("❌ Sound error:", err));
     } catch (err) {
       console.error("❌ Audio init error:", err);
@@ -28,24 +28,30 @@ export default function SilverButton({
       onClick={playSound}
       type={type}
       className={`
-        relative rounded-full px-8 py-2
-        italic text-xs tracking-wider
-        bg-gradient-to-r from-gray-200 via-gray-300 to-gray-400
-        text-white font-light
+        relative px-8 py-3
+        rounded-full
+        text-sm tracking-wider font-light italic
+        text-white
         transition-transform duration-300
         hover:scale-105 active:scale-95
         focus:outline-none
-        shadow-[0_0_15px_rgba(128,0,128,0.7)]
         overflow-hidden
+        shadow-[0_0_25px_rgba(192,192,255,0.8)]
+        bg-gradient-to-r from-[#e0f7fa] via-[#cfd8dc] to-[#b0bec5]
       `}
-      style={{
-        borderImage: "linear-gradient(90deg, silver, purple, #ff00ff, #800080) 1",
-        borderWidth: "2px",
-        borderStyle: "solid",
-      }}
     >
+      {/* Bubble / water drop effect */}
+      <span
+        className="absolute inset-0 rounded-full
+                   bg-gradient-to-r from-[#ffffff80] via-[#e0f7fa80] to-[#cfd8dc80]
+                   animate-pulse opacity-50"
+      ></span>
+
       {/* Glitch effect wrapper */}
-      <span className="glitch-text" data-text={children}>
+      <span
+        className="relative glitch-text"
+        data-text={children}
+      >
         {children}
       </span>
     </button>

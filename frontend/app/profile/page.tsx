@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/utils/api";                // ✅ axios instance
-import SilverButton from "@/components/SilverButton"; // ✅ button component
+import api from "@/utils/api";
+import SilverButton from "@/components/SilverButton";
 
 const getMediaURL = (path: string) => {
   const base = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "";
@@ -20,35 +20,34 @@ export default function ProfilePage() {
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
 
+  const fetchProfile = async () => {
+    try {
+      const resUser = await api.get("/profile/me");
+      setUser(resUser.data);
+
+      const resCv = await api.get("/cv/my-cv");
+      setCv(resCv.data.cv);
+
+      const resStatuses = await api.get("/status/my-statuses");
+      setStatuses(resStatuses.data);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        localStorage.clear();
+        router.push("/login");
+      } else {
+        console.error("❌ Profile fetch error:", err.response?.data || err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
     }
-
-    const fetchProfile = async () => {
-      try {
-        const resUser = await api.get("/profile/me");
-        setUser(resUser.data);
-
-        const resCv = await api.get("/cv/my-cv");
-        setCv(resCv.data);
-
-        const resStatuses = await api.get("/status/my-statuses");
-        setStatuses(resStatuses.data);
-      } catch (err: any) {
-        if (err.response?.status === 401) {
-          localStorage.clear();
-          router.push("/login");
-        } else {
-          console.error("❌ Profile fetch error:", err.response?.data || err.message);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, [router]);
 
@@ -58,7 +57,7 @@ export default function ProfilePage() {
     formData.append("profileImage", profileFile);
     await api.post("/profile/upload-image", formData);
     alert("✅ Profile picture updated!");
-    window.location.reload();
+    fetchProfile();
   };
 
   const handleCvUpload = async () => {
@@ -67,7 +66,7 @@ export default function ProfilePage() {
     formData.append("cv", cvFile);
     await api.post("/cv/upload", formData);
     alert("✅ CV uploaded!");
-    window.location.reload();
+    fetchProfile();
   };
 
   if (loading) return <p className="text-center text-gray-400">⏳ Loading profile...</p>;
@@ -97,7 +96,7 @@ export default function ProfilePage() {
         {/* User Info */}
         <div className="bg-gray-800 p-6 rounded shadow-md w-full max-w-md mb-6 text-center">
           <img
-            src={user.profileImage ? getMediaURL(user.profileImage) : "/default-avatar.png"}
+            src={user.profilePhotoUrl ? getMediaURL(user.profilePhotoUrl) : "/default-avatar.png"}
             alt="Profile"
             className="w-32 h-32 rounded-full border-4 border-gray-500 mx-auto mb-4"
           />
@@ -185,4 +184,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

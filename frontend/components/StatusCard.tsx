@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import api from "../utils/api"; // ✅ use shared axios instance
+import api from "../utils/api"; // ✅ shared axios instance
 
 interface Comment {
-  user?: { Name: string };
+  user?: { _id: string; name: string };
   text: string;
 }
 
 interface Status {
   _id: string;
-  UserId?: { Name: string };
+  UserId?: { _id: string; name: string };
   Text: string;
   Image?: string[];
   Video?: string;
@@ -57,11 +57,16 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
     }
   };
 
+  const getMediaURL = (path: string) => {
+    const base = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "";
+    return `${base}${path}`;
+  };
+
   return (
     <div className="status-card border rounded p-4 mb-6 shadow bg-gray-800 text-white">
       {/* Header */}
       <div className="status-header flex justify-between mb-2">
-        <strong>{status.UserId?.Name}</strong>
+        <strong>{status.UserId?.name || "Anonymous"}</strong>
         <span className="text-sm text-gray-400">
           {new Date(status.createdAt).toLocaleString()}
         </span>
@@ -74,7 +79,7 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
       {status.Image?.map((img, idx) => (
         <img
           key={idx}
-          src={img}
+          src={getMediaURL(img)}
           alt="status"
           className="status-image w-full rounded mb-2"
         />
@@ -83,7 +88,7 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
       {/* Video */}
       {status.Video && (
         <video
-          src={status.Video}
+          src={getMediaURL(status.Video)}
           controls
           className="status-video w-full rounded mb-2"
         />
@@ -126,7 +131,7 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
       <div className="comments space-y-1">
         {status.Comments?.map((c, idx) => (
           <p key={idx} className="text-sm">
-            <strong>{c.user?.Name}:</strong> {c.text}
+            <strong>{c.user?.name || "Anonymous"}:</strong> {c.text}
           </p>
         ))}
       </div>

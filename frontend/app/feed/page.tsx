@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
-import StatusCard from '../../components/StatusCard';
-import PostForm from '../../components/PostForm';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import api from "@/utils/api";                // ✅ axios instance
+import StatusCard from "@/components/StatusCard";
+import PostForm from "@/components/PostForm";
+import SilverButton from "@/components/SilverButton";
 
 interface Comment {
-  user?: { _id: string; Name: string };
+  user?: { _id: string; name: string };
   text: string;
 }
 
 interface Status {
   _id: string;
-  UserId?: { _id: string; Name: string };
+  UserId?: { _id: string; name: string };
   Text: string;
   Image?: string[];
   Video?: string;
@@ -34,24 +35,24 @@ const FeedPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        router.push('/login');
+        router.push("/login");
         return;
       }
 
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/status`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
-
-      setFeed(res.data);
-    } catch (err) {
-      console.error('❌ Feed fetch error:', err);
-      if (axios.isAxiosError(err) && err.response?.status === 401) {
-        router.push('/login');
+      // ✅ use api instance
+      const res = await api.get("/status");
+      // backend consistency: if response is { statuses: [...] }
+      const statuses = res.data.statuses || res.data;
+      setFeed(statuses);
+    } catch (err: any) {
+      console.error("❌ Feed fetch error:", err);
+      if (err.response?.status === 401) {
+        localStorage.clear();
+        router.push("/login");
       } else {
-        setError('Failed to load feed. Please try again later.');
+        setError("Failed to load feed. Please try again later.");
       }
     } finally {
       setLoading(false);
@@ -69,8 +70,13 @@ const FeedPage: React.FC = () => {
       {/* ✅ PostForm for creating new status */}
       <PostForm refreshFeed={fetchFeed} />
 
-      {loading && <p className="text-gray-400">Loading feed...</p>}
-      {error && <p className="text-red-400">{error}</p>}
+      {loading && <p className="text-gray-400">⏳ Loading feed...</p>}
+      {error && (
+        <div>
+          <p className="text-red-400">{error}</p>
+          <SilverButton onClick={fetchFeed}>🔄 Retry</SilverButton>
+        </div>
+      )}
 
       {!loading && !error && feed.length === 0 && (
         <p className="text-gray-400">No statuses yet.</p>
@@ -78,11 +84,7 @@ const FeedPage: React.FC = () => {
 
       <div className="feed-list space-y-4 mt-4">
         {feed.map((status) => (
-          <StatusCard
-            key={status._id}
-            status={status}
-            refreshFeed={fetchFeed}
-          />
+          <StatusCard key={status._id} status={status} refreshFeed={fetchFeed} />
         ))}
       </div>
     </div>
