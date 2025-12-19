@@ -1,6 +1,7 @@
 "use client";
+
 import { useState } from "react";
-import api from "./utils/axios"; // ✅ সঠিক path
+import api from "./utils/api"; // ✅ সঠিক path
 
 export default function ChangePasswordForm() {
   const [oldPassword, setOldPassword] = useState("");
