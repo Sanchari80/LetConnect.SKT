@@ -30,8 +30,9 @@ const server = http.createServer(app);
 // ✅ Allowed Origins (dynamic)
 // ==========================
 const allowedOrigins = [
-  "https://let-connect-skt.vercel.app",      // ✅ Production domain
-  "https://let-connect-skt-66s3.vercel.app" // ✅ Preview domain
+  "https://let-connect-skt.vercel.app", // ✅ Production domain
+  "https://let-connect-skt-66s3.vercel.app", // ✅ Preview domain
+  "https://let-connect-o77rtmuo5-sanchari80s-projects.vercel.app" // ✅ Your current preview domain
 ];
 
 if (process.env.NODE_ENV === "development") {
@@ -94,8 +95,8 @@ app.use("/api/conversation", require("./routes/conversation"));
 app.use("/api/post", require("./routes/post"));
 
 // 🔔 Notifications (user-specific + admin control)
-app.use("/api/notifications", require("./routes/notification")); 
-app.use("/api/admin", require("./routes/adminControl")); 
+app.use("/api/notifications", require("./routes/notification"));
+app.use("/api/admin", require("./routes/adminControl"));
 
 // 📢 Advertise system
 app.use("/api/advertise", require("./routes/advertise"));
