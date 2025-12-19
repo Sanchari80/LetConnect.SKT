@@ -36,7 +36,7 @@ app.use(
       "http://localhost:3001",
       "http://192.168.0.104:3000",
       "http://192.168.0.104:3001",
-      "https://letconnect.vercel.app",
+      "https://let-connect-skt-66s3.vercel.app", // ✅ তোমার frontend live domain
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -107,7 +107,7 @@ const io = new Server(server, {
       "http://localhost:3001",
       "http://192.168.0.104:3000",
       "http://192.168.0.104:3001",
-      "https://letconnect.vercel.app",
+      "https://let-connect-skt-66s3.vercel.app", // ✅ frontend live domain
     ],
     methods: ["GET", "POST"],
   },
