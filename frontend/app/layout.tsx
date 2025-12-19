@@ -1,8 +1,8 @@
 import "./globals.css";
 import { AuthProvider } from "../components/AuthContext";
 import LayoutWrapper from "../components/LayoutWrapper";
-import { SocketProvider } from "@context/SocketContext"; // ✅ socket context যোগ করা হলো
-import ClickSound from "../components/Sound"; // ✅ client-side sound component
+import { SocketProvider } from "@context/SocketContext";
+import ClickSound from "../components/Sound";
 
 // ✅ Metadata export is allowed only in server components
 export const metadata = {
