@@ -27,17 +27,28 @@ const app = express();
 const server = http.createServer(app);
 
 // ==========================
+// ✅ Allowed Origins (dynamic)
+// ==========================
+const allowedOrigins = [
+  "https://let-connect-skt.vercel.app",      // ✅ Production domain
+  "https://let-connect-skt-66s3.vercel.app" // ✅ Preview domain
+];
+
+if (process.env.NODE_ENV === "development") {
+  allowedOrigins.push(
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://192.168.0.104:3000",
+    "http://192.168.0.104:3001"
+  );
+}
+
+// ==========================
 // ✅ Middleware
 // ==========================
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://192.168.0.104:3000",
-      "http://192.168.0.104:3001",
-      "https://let-connect-skt-66s3.vercel.app", // ✅ তোমার frontend live domain
-    ],
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -83,8 +94,8 @@ app.use("/api/conversation", require("./routes/conversation"));
 app.use("/api/post", require("./routes/post"));
 
 // 🔔 Notifications (user-specific + admin control)
-app.use("/api/notifications", require("./routes/notification")); // user notifications
-app.use("/api/admin", require("./routes/adminControl")); // admin/moderator routes
+app.use("/api/notifications", require("./routes/notification")); 
+app.use("/api/admin", require("./routes/adminControl")); 
 
 // 📢 Advertise system
 app.use("/api/advertise", require("./routes/advertise"));
@@ -102,13 +113,7 @@ app.use((err, req, res, next) => {
 // ==========================
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://192.168.0.104:3000",
-      "http://192.168.0.104:3001",
-      "https://let-connect-skt-66s3.vercel.app", // ✅ frontend live domain
-    ],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
 });
