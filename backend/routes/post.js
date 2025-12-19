@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Post = require("../models/Post");
 const Notification = require("../models/Notification");
+const verifyToken = require("../middleware/verifyToken"); // ✅ Secure middleware
 
 // ==========================
 // ✅ Get all posts
@@ -19,9 +20,9 @@ router.get("/", async (req, res) => {
 // ==========================
 // ✅ Like a post
 // ==========================
-router.post("/:id/like", async (req, res) => {
+router.post("/:id/like", verifyToken, async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.user.id; // ✅ from token
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: "Post not found" });
 
@@ -50,9 +51,10 @@ router.post("/:id/like", async (req, res) => {
 // ==========================
 // ✅ Comment on a post
 // ==========================
-router.post("/:id/comment", async (req, res) => {
+router.post("/:id/comment", verifyToken, async (req, res) => {
   try {
-    const { userId, text } = req.body;
+    const userId = req.user.id; // ✅ from token
+    const { text } = req.body;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: "Post not found" });
 
@@ -79,9 +81,9 @@ router.post("/:id/comment", async (req, res) => {
 // ==========================
 // ✅ Share a post
 // ==========================
-router.post("/:id/share", async (req, res) => {
+router.post("/:id/share", verifyToken, async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.user.id; // ✅ from token
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: "Post not found" });
 

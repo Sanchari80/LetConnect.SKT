@@ -1,21 +1,21 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const authMiddleware = require("../middleware/authMiddleware");
+const verifyToken = require("../middleware/verifyToken"); // ✅ Updated middleware
 const upload = require("../middleware/upload"); // multer middleware
 
 // ==========================
 // ✅ Get logged-in user's profile
 // ==========================
-router.get("/me", authMiddleware, async (req, res) => {
+router.get("/me", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-Password");
+    const user = await User.findById(req.user.id).select("-password"); // ✅ align with schema
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
     res.json({ message: "✅ Profile fetched successfully", user });
   } catch (err) {
-    console.error("Profile fetch error:", err.message);
+    console.error("❌ Profile fetch error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -25,28 +25,32 @@ router.get("/me", authMiddleware, async (req, res) => {
 // ==========================
 router.put(
   "/update",
-  authMiddleware,
-  upload.single("ProfilePic"), // 👈 optional profile picture upload
+  verifyToken,
+  upload.single("profileImage"), // 👈 field name must match frontend
   async (req, res) => {
     try {
       const updates = {
-        Name: req.body.Name || req.user.Name,
-        Contact: req.body.Contact || req.user.Contact,
+        name: req.body.name || undefined,
+        contact: req.body.contact || undefined,
       };
 
       if (req.file) {
-        updates.ProfilePic = `/upload/${req.file.filename}`;
+        updates.profileImage = `/uploads/profile/${req.file.filename}`; // ✅ consistent path
       }
 
       const updatedUser = await User.findByIdAndUpdate(
-        req.user._id,
+        req.user.id,
         updates,
         { new: true }
-      ).select("-Password");
+      ).select("-password");
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
 
       res.json({ message: "✅ Profile updated successfully", user: updatedUser });
     } catch (err) {
-      console.error("Profile update error:", err.message);
+      console.error("❌ Profile update error:", err.message);
       res.status(500).json({ error: "Server error" });
     }
   }

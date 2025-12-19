@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
+const verifyToken = require("../middleware/verifyToken"); // ✅ Updated middleware
 
-// ✅ CV model import (case-sensitive fix)
+// ✅ CV model import
 const CV = require("../models/CV");
 
 // ✅ User model import
@@ -17,17 +17,17 @@ const { uploadCV, deleteCV, getMyCV } = require("../Controller/cvController");
 // ==========================
 // ✅ CV Upload (replace old if exists)
 // ==========================
-router.post("/upload", authMiddleware, upload.single("cv"), uploadCV);
+router.post("/upload", verifyToken, upload.single("cv"), uploadCV);
 
 // ==========================
 // ✅ CV Delete (manual delete option)
 // ==========================
-router.delete("/delete", authMiddleware, deleteCV);
+router.delete("/delete", verifyToken, deleteCV);
 
 // ==========================
 // ✅ CV Preview route (show CV + cover letter before download)
 // ==========================
-router.get("/preview/:userId", authMiddleware, async (req, res) => {
+router.get("/preview/:userId", verifyToken, async (req, res) => {
   try {
     const cv = await CV.findOne({ user: req.params.userId });
     if (!cv) return res.status(404).json({ message: "CV not found" });
@@ -49,7 +49,7 @@ router.get("/preview/:userId", authMiddleware, async (req, res) => {
 // ==========================
 // ✅ CV Download route
 // ==========================
-router.get("/download/:userId", authMiddleware, async (req, res) => {
+router.get("/download/:userId", verifyToken, async (req, res) => {
   try {
     const cv = await CV.findOne({ user: req.params.userId });
     if (!cv) return res.status(404).json({ message: "CV not found" });
@@ -68,6 +68,6 @@ router.get("/download/:userId", authMiddleware, async (req, res) => {
 // ==========================
 // ✅ My CV route (for /api/cv/my-cv)
 // ==========================
-router.get("/my-cv", authMiddleware, getMyCV);
+router.get("/my-cv", verifyToken, getMyCV);
 
 module.exports = router;

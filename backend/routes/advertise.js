@@ -1,18 +1,18 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
 const Advertise = require("../models/Advertise");
 const Notification = require("../models/Notification");
+const verifyToken = require("../middleware/verifyToken"); // ✅ Updated middleware
 
 // ==========================
 // ✅ Create an advertisement request (approved=false)
 // ==========================
-router.post("/", authMiddleware, async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   try {
     const { title, description, link } = req.body;
 
     const ad = new Advertise({
-      user: req.user._id,
+      user: req.user.id,
       title,
       description,
       link,
@@ -23,9 +23,9 @@ router.post("/", authMiddleware, async (req, res) => {
 
     // ✅ Notification for requester (নিজের কাছে যাবে)
     await Notification.create({
-      user: req.user._id,
+      user: req.user.id,
       type: "advertise",
-      fromUser: req.user._id,
+      fromUser: req.user.id,
       message: `Your advertise request "${title}" has been submitted`,
     });
 
@@ -52,9 +52,9 @@ router.get("/", async (req, res) => {
 // ==========================
 // ✅ Get my own advertisements (user dashboard)
 // ==========================
-router.get("/my", authMiddleware, async (req, res) => {
+router.get("/my", verifyToken, async (req, res) => {
   try {
-    const ads = await Advertise.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const ads = await Advertise.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.status(200).json(ads);
   } catch (err) {
     console.error("❌ My Advertise fetch error:", err.message);
@@ -65,12 +65,12 @@ router.get("/my", authMiddleware, async (req, res) => {
 // ==========================
 // ✅ Delete my own advertisement request
 // ==========================
-router.delete("/:id", authMiddleware, async (req, res) => {
+router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const ad = await Advertise.findById(req.params.id);
     if (!ad) return res.status(404).json({ error: "Advertisement not found" });
 
-    if (ad.user.toString() !== req.user._id.toString()) {
+    if (ad.user.toString() !== req.user.id.toString()) {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -78,9 +78,9 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
     // ✅ Notification for requester (নিজের কাছে যাবে)
     await Notification.create({
-      user: req.user._id,
+      user: req.user.id,
       type: "advertise",
-      fromUser: req.user._id,
+      fromUser: req.user.id,
       message: `Your advertise "${ad.title}" has been deleted`,
     });
 

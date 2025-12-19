@@ -2,16 +2,16 @@ const express = require("express");
 const router = express.Router();
 const Connect = require("../models/Connect");
 const User = require("../models/User");
-const authMiddleware = require("../middleware/authMiddleware");
+const verifyToken = require("../middleware/verifyToken"); // ✅ Updated middleware
 
 // ==========================
 // ✅ Send LetConnect Request
 // ==========================
-router.post("/request/:id", authMiddleware, async (req, res) => {
+router.post("/request/:id", verifyToken, async (req, res) => {
   try {
     // Prevent duplicate request
     const existing = await Connect.findOne({
-      requester: req.user._id,
+      requester: req.user.id,
       recipient: req.params.id
     });
     if (existing) {
@@ -19,7 +19,7 @@ router.post("/request/:id", authMiddleware, async (req, res) => {
     }
 
     const connect = new Connect({
-      requester: req.user._id,
+      requester: req.user.id,
       recipient: req.params.id,
       status: "pending"
     });
@@ -27,7 +27,7 @@ router.post("/request/:id", authMiddleware, async (req, res) => {
 
     res.json({ message: "✅ LetConnect request sent!", connect });
   } catch (err) {
-    console.error("Request error:", err.message);
+    console.error("❌ Request error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -35,12 +35,12 @@ router.post("/request/:id", authMiddleware, async (req, res) => {
 // ==========================
 // ✅ Accept Request
 // ==========================
-router.post("/accept/:id", authMiddleware, async (req, res) => {
+router.post("/accept/:id", verifyToken, async (req, res) => {
   try {
     const connect = await Connect.findById(req.params.id);
     if (!connect) return res.status(404).json({ error: "Request not found" });
 
-    if (connect.recipient.toString() !== req.user._id.toString()) {
+    if (connect.recipient.toString() !== req.user.id.toString()) {
       return res.status(403).json({ error: "Not authorized to accept this request" });
     }
 
@@ -49,7 +49,7 @@ router.post("/accept/:id", authMiddleware, async (req, res) => {
 
     res.json({ message: "✅ Connected successfully!", connect });
   } catch (err) {
-    console.error("Accept error:", err.message);
+    console.error("❌ Accept error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -57,19 +57,19 @@ router.post("/accept/:id", authMiddleware, async (req, res) => {
 // ==========================
 // ❌ Reject Request
 // ==========================
-router.post("/reject/:id", authMiddleware, async (req, res) => {
+router.post("/reject/:id", verifyToken, async (req, res) => {
   try {
     const connect = await Connect.findById(req.params.id);
     if (!connect) return res.status(404).json({ error: "Request not found" });
 
-    if (connect.recipient.toString() !== req.user._id.toString()) {
+    if (connect.recipient.toString() !== req.user.id.toString()) {
       return res.status(403).json({ error: "Not authorized to reject this request" });
     }
 
     await connect.deleteOne();
     res.json({ message: "❌ Request rejected" });
   } catch (err) {
-    console.error("Reject error:", err.message);
+    console.error("❌ Reject error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -77,22 +77,22 @@ router.post("/reject/:id", authMiddleware, async (req, res) => {
 // ==========================
 // ✅ Disconnect
 // ==========================
-router.post("/disconnect/:id", authMiddleware, async (req, res) => {
+router.post("/disconnect/:id", verifyToken, async (req, res) => {
   try {
     await Connect.findOneAndDelete({
-      requester: req.user._id,
+      requester: req.user.id,
       recipient: req.params.id,
       status: "accepted"
     });
     await Connect.findOneAndDelete({
       requester: req.params.id,
-      recipient: req.user._id,
+      recipient: req.user.id,
       status: "accepted"
     });
 
     res.json({ message: "❌ Disconnected!" });
   } catch (err) {
-    console.error("Disconnect error:", err.message);
+    console.error("❌ Disconnect error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -100,20 +100,20 @@ router.post("/disconnect/:id", authMiddleware, async (req, res) => {
 // ==========================
 // ✅ Get My Connections
 // ==========================
-router.get("/my-connections", authMiddleware, async (req, res) => {
+router.get("/my-connections", verifyToken, async (req, res) => {
   try {
     const connections = await Connect.find({
       $or: [
-        { requester: req.user._id, status: "accepted" },
-        { recipient: req.user._id, status: "accepted" }
+        { requester: req.user.id, status: "accepted" },
+        { recipient: req.user.id, status: "accepted" }
       ]
     })
-      .populate("requester", "Name Email")
-      .populate("recipient", "Name Email");
+      .populate("requester", "username email")
+      .populate("recipient", "username email");
 
     res.json(connections);
   } catch (err) {
-    console.error("Connections error:", err.message);
+    console.error("❌ Connections error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -121,16 +121,16 @@ router.get("/my-connections", authMiddleware, async (req, res) => {
 // ==========================
 // ✅ Get Pending Requests
 // ==========================
-router.get("/pending", authMiddleware, async (req, res) => {
+router.get("/pending", verifyToken, async (req, res) => {
   try {
     const requests = await Connect.find({
-      recipient: req.user._id,
+      recipient: req.user.id,
       status: "pending"
-    }).populate("requester", "Name Email");
+    }).populate("requester", "username email");
 
     res.json(requests);
   } catch (err) {
-    console.error("Pending error:", err.message);
+    console.error("❌ Pending error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });

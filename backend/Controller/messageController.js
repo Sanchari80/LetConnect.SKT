@@ -1,12 +1,15 @@
 const mongoose = require("mongoose");
 const Message = require("../models/message");
 
+// ==========================
+// ✅ Send Message
+// ==========================
 const sendMessage = async (req, res) => {
   try {
-    const { conversationId, receiver, text, emoji, senderId } = req.body;
+    const { conversationId, receiver, text, emoji } = req.body;
 
-    if (!senderId || !text) {
-      return res.status(400).json({ error: "Sender and text are required" });
+    if (!text) {
+      return res.status(400).json({ error: "Message text is required" });
     }
 
     if (conversationId && !mongoose.Types.ObjectId.isValid(conversationId)) {
@@ -25,7 +28,7 @@ const sendMessage = async (req, res) => {
 
     const message = new Message({
       conversationId: conversationId || undefined,
-      sender: senderId,
+      sender: req.user.id, // ✅ enforce logged-in user
       receiver: receiver || undefined,
       text,
       emoji,
@@ -46,10 +49,13 @@ const sendMessage = async (req, res) => {
     res.status(201).json({ message: "✅ Message sent", data: message });
   } catch (err) {
     console.error("❌ Send message error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Server error" });
   }
 };
 
+// ==========================
+// ✅ Get Conversation by ID
+// ==========================
 const getConversationById = async (req, res) => {
   try {
     const { conversationId } = req.params;
@@ -59,31 +65,34 @@ const getConversationById = async (req, res) => {
     }
 
     const messages = await Message.find({ conversationId })
-      .populate("sender", "name _id")
+      .populate("sender", "username email _id") // ✅ consistent fields
       .sort({ createdAt: 1 });
 
     res.status(200).json({ message: "✅ Conversation fetched", data: messages });
   } catch (err) {
     console.error("❌ Get conversation error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Server error" });
   }
 };
 
+// ==========================
+// ✅ Get User Conversation
+// ==========================
 const getUserConversation = async (req, res) => {
   try {
     const userId = req.params.userId;
 
     const messages = await Message.find({
       $or: [
-        { sender: req.user?.id, receiver: userId },
-        { sender: userId, receiver: req.user?.id },
+        { sender: req.user.id, receiver: userId },
+        { sender: userId, receiver: req.user.id },
       ],
     }).sort({ createdAt: 1 });
 
     res.status(200).json({ message: "✅ User conversation fetched", data: messages });
   } catch (err) {
     console.error("❌ Get user conversation error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Server error" });
   }
 };
 

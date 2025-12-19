@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const auth = require("../middleware/authMiddleware");
+const verifyToken = require("../middleware/verifyToken"); // ✅ Updated middleware
 const Message = require("../models/message");
 const path = require("path");
 const multer = require("multer");
@@ -39,7 +39,7 @@ const upload = multer({ storage, fileFilter });
 // ==========================
 // ✅ Send a message (text + emoji + attachments)
 // ==========================
-router.post("/send", auth, upload.array("attachments", 5), async (req, res) => {
+router.post("/send", verifyToken, upload.array("attachments", 5), async (req, res) => {
   try {
     const { to, text, emoji } = req.body;
     if (!to) return res.status(400).json({ message: "Recipient required" });
@@ -60,6 +60,7 @@ router.post("/send", auth, upload.array("attachments", 5), async (req, res) => {
 
     const savedMessage = await newMessage.save();
 
+    // ✅ Emit via socket.io if available
     const io = req.app.get("io");
     if (io) io.emit("receiveMessage", savedMessage);
 
@@ -73,7 +74,7 @@ router.post("/send", auth, upload.array("attachments", 5), async (req, res) => {
 // ==========================
 // ✅ Inbox (messages received by current user)
 // ==========================
-router.get("/inbox", auth, async (req, res) => {
+router.get("/inbox", verifyToken, async (req, res) => {
   try {
     const messages = await Message.find({ receiver: req.user.id }).sort({ sentAt: -1 });
     res.json({ messages });
@@ -86,7 +87,7 @@ router.get("/inbox", auth, async (req, res) => {
 // ==========================
 // ✅ Outbox (messages sent by current user)
 // ==========================
-router.get("/outbox", auth, async (req, res) => {
+router.get("/outbox", verifyToken, async (req, res) => {
   try {
     const messages = await Message.find({ sender: req.user.id }).sort({ sentAt: -1 });
     res.json({ messages });

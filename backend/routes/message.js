@@ -3,8 +3,11 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 
-// ✅ Import controller functions (respecting capital C in folder name)
+// ✅ Import controller functions
 const messageController = require("../Controller/messageController");
+
+// ✅ Import verifyToken middleware
+const verifyToken = require("../middleware/verifyToken");
 
 // ✅ Storage setup for attachments
 const storage = multer.diskStorage({
@@ -12,7 +15,7 @@ const storage = multer.diskStorage({
     cb(null, path.join(__dirname, "../uploads/messages"));
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
+    cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_"));
   },
 });
 
@@ -34,15 +37,22 @@ const fileFilter = (req, file, cb) => {
 // ✅ Multer middleware
 const upload = multer({ storage, fileFilter });
 
+// ==========================
 // ✅ Routes
+// ==========================
+
+// Send a message (with optional attachments)
 router.post(
   "/send-message",
-  upload.array("attachments", 5), // optional attachments
+  verifyToken,
+  upload.array("attachments", 5),
   messageController.sendMessage
 );
 
-router.get("/:conversationId", messageController.getConversationById);
+// Get conversation by ID
+router.get("/:conversationId", verifyToken, messageController.getConversationById);
 
-router.get("/user/:userId", messageController.getUserConversation);
+// Get all conversations for a user
+router.get("/user/:userId", verifyToken, messageController.getUserConversation);
 
 module.exports = router;

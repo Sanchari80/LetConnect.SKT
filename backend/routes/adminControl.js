@@ -1,28 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Post = require("../models/Post");
 const Advertise = require("../models/Advertise");
 const Notification = require("../models/Notification");
-
-// ==========================
-// ✅ Middleware: verifyToken
-// ==========================
-function verifyToken(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) {
-    return res.status(401).json({ error: "Access denied. No token provided." });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { _id, email, role }
-    next();
-  } catch (err) {
-    return res.status(400).json({ error: "Invalid token" });
-  }
-}
+const verifyToken = require("../middleware/verifyToken"); // ✅ use shared middleware
 
 // ==========================
 // ✅ Middleware: checkAdmin
@@ -76,7 +58,7 @@ router.patch("/users/:id/unblock", verifyToken, checkAdmin, async (req, res) => 
   }
 });
 
-// Make moderator (only admin can do this)
+// Make moderator
 router.patch("/users/:id/make-moderator", verifyToken, checkAdmin, async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -94,7 +76,6 @@ router.patch("/users/:id/make-moderator", verifyToken, checkAdmin, async (req, r
 // ✅ Post Management
 // ==========================
 
-// Delete post
 router.delete("/posts/:id", verifyToken, checkAdmin, async (req, res) => {
   try {
     await Post.findByIdAndDelete(req.params.id);
@@ -104,7 +85,6 @@ router.delete("/posts/:id", verifyToken, checkAdmin, async (req, res) => {
   }
 });
 
-// Block post
 router.patch("/posts/:id/block", verifyToken, checkAdmin, async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(
@@ -118,7 +98,6 @@ router.patch("/posts/:id/block", verifyToken, checkAdmin, async (req, res) => {
   }
 });
 
-// Unblock post
 router.patch("/posts/:id/unblock", verifyToken, checkAdmin, async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(
@@ -136,7 +115,6 @@ router.patch("/posts/:id/unblock", verifyToken, checkAdmin, async (req, res) => 
 // ✅ Advertise Management
 // ==========================
 
-// Get all advertise requests
 router.get("/advertises", verifyToken, checkAdmin, async (req, res) => {
   try {
     const ads = await Advertise.find().populate("user", "username email");
@@ -146,7 +124,6 @@ router.get("/advertises", verifyToken, checkAdmin, async (req, res) => {
   }
 });
 
-// Approve advertise
 router.patch("/advertises/:id/approve", verifyToken, checkAdmin, async (req, res) => {
   try {
     const ad = await Advertise.findByIdAndUpdate(
@@ -157,19 +134,18 @@ router.patch("/advertises/:id/approve", verifyToken, checkAdmin, async (req, res
 
     if (!ad) return res.status(404).json({ error: "Advertise not found" });
 
-    // ✅ Notification for admin (action log)
+    // ✅ Notifications
     await Notification.create({
-      user: req.user._id,
+      user: req.user.id,
       type: "advertise",
       fromUser: ad.user._id,
       message: `Advertise approved: ${ad.title}`
     });
 
-    // ✅ Notification for requester
     await Notification.create({
       user: ad.user._id,
       type: "advertise",
-      fromUser: req.user._id,
+      fromUser: req.user.id,
       message: `Your advertise "${ad.title}" has been approved ✅`
     });
 
@@ -179,7 +155,6 @@ router.patch("/advertises/:id/approve", verifyToken, checkAdmin, async (req, res
   }
 });
 
-// Delete/reject advertise
 router.delete("/advertises/:id", verifyToken, checkAdmin, async (req, res) => {
   try {
     const ad = await Advertise.findById(req.params.id).populate("user", "username email");
@@ -187,19 +162,17 @@ router.delete("/advertises/:id", verifyToken, checkAdmin, async (req, res) => {
 
     await Advertise.findByIdAndDelete(req.params.id);
 
-    // ✅ Notification for admin (action log)
     await Notification.create({
-      user: req.user._id,
+      user: req.user.id,
       type: "advertise",
       fromUser: ad.user._id,
       message: `Advertise rejected/deleted: ${ad.title}`
     });
 
-    // ✅ Notification for requester
     await Notification.create({
       user: ad.user._id,
       type: "advertise",
-      fromUser: req.user._id,
+      fromUser: req.user.id,
       message: `Your advertise "${ad.title}" has been rejected ❌`
     });
 

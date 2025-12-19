@@ -23,7 +23,7 @@ exports.signup = async (req, res) => {
   try {
     console.log("📩 Signup REQ BODY:", req.body);
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     // Basic validation
     if (!email || !password) {
@@ -39,12 +39,12 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
+    // Create new user (always role=user)
     const user = new User({
       name: name || "Anonymous",
       email,
       password: hashedPassword,
-      role: role || "user",
+      role: "user", // 👈 enforce user role
     });
 
     await user.save();
@@ -64,7 +64,7 @@ exports.signup = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Signup error:", err.message);
-    res.status(500).json({ error: "Signup failed: " + err.message });
+    res.status(500).json({ error: "Signup failed" });
   }
 };
 
@@ -109,6 +109,6 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Login error:", err.message);
-    res.status(500).json({ error: "Login failed: " + err.message });
+    res.status(500).json({ error: "Login failed" });
   }
 };

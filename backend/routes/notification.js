@@ -1,46 +1,35 @@
 const express = require("express");
 const router = express.Router();
-const jwt = require("jsonwebtoken");
 const Notification = require("../models/Notification");
+const verifyToken = require("../middleware/verifyToken"); // ✅ use shared middleware
 
-// ✅ Middleware: verifyToken
-function verifyToken(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) {
-    return res.status(401).json({ error: "Access denied. No token provided." });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { _id, email, role }
-    next();
-  } catch (err) {
-    return res.status(400).json({ error: "Invalid token" });
-  }
-}
-
+// ==========================
 // ✅ Get notifications for logged-in user only
+// ==========================
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const notifications = await Notification.find({ user: req.user._id })
+    const notifications = await Notification.find({ user: req.user.id })
       .populate("fromUser", "username profileImage")
       .populate("post", "content")
       .sort({ createdAt: -1 });
 
     res.json(notifications);
   } catch (err) {
+    console.error("❌ Fetch notifications error:", err.message);
     res.status(500).json({ error: "Failed to fetch notifications" });
   }
 });
 
+// ==========================
 // ✅ Mark notification as read
+// ==========================
 router.post("/:id/read", verifyToken, async (req, res) => {
   try {
     const notif = await Notification.findById(req.params.id);
     if (!notif) return res.status(404).json({ error: "Notification not found" });
 
     // ✅ Ensure only owner can mark as read
-    if (notif.user.toString() !== req.user._id.toString()) {
+    if (notif.user.toString() !== req.user.id.toString()) {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -49,6 +38,7 @@ router.post("/:id/read", verifyToken, async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
+    console.error("❌ Mark as read error:", err.message);
     res.status(500).json({ error: "Failed to mark as read" });
   }
 });

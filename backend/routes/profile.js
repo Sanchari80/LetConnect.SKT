@@ -1,16 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const authMiddleware = require("../middleware/authMiddleware");
+const verifyToken = require("../middleware/verifyToken"); // ✅ Updated middleware
 const upload = require("../middleware/upload"); // ✅ Multer middleware
 
 // ==========================
 // ✅ Get logged-in user's profile
 // ==========================
-router.get("/me", authMiddleware, async (req, res) => {
+router.get("/me", verifyToken, async (req, res) => {
   try {
     // ✅ Password বাদ দাও
-    const user = await User.findById(req.user._id).select("-password");
+    const user = await User.findById(req.user.id).select("-password");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -26,13 +26,13 @@ router.get("/me", authMiddleware, async (req, res) => {
 // ==========================
 router.put(
   "/update",
-  authMiddleware,
+  verifyToken,
   upload.single("profileImage"), // 👈 field name must match frontend
   async (req, res) => {
     try {
       const updates = {
-        name: req.body.name || req.user.name,
-        contact: req.body.contact || req.user.contact,
+        name: req.body.name || undefined,
+        contact: req.body.contact || undefined,
       };
 
       // ✅ If profile picture uploaded
@@ -41,7 +41,7 @@ router.put(
       }
 
       const updatedUser = await User.findByIdAndUpdate(
-        req.user._id,
+        req.user.id,
         updates,
         { new: true }
       ).select("-password");
@@ -66,7 +66,7 @@ router.put(
 // ==========================
 router.post(
   "/upload-image",
-  authMiddleware,
+  verifyToken,
   upload.single("profileImage"),
   async (req, res) => {
     try {
@@ -75,7 +75,7 @@ router.post(
       }
 
       const updatedUser = await User.findByIdAndUpdate(
-        req.user._id,
+        req.user.id,
         { profileImage: `/uploads/profile/${req.file.filename}` },
         { new: true }
       ).select("-password");

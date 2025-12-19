@@ -30,9 +30,9 @@ const server = http.createServer(app);
 // ✅ Allowed Origins (dynamic)
 // ==========================
 const allowedOrigins = [
-  "https://let-connect-skt.vercel.app", // ✅ Production domain
-  "https://let-connect-skt-66s3.vercel.app", // ✅ Preview domain
-  "https://let-connect-o77rtmuo5-sanchari80s-projects.vercel.app" // ✅ Your current preview domain
+  "https://let-connect-skt.vercel.app", // Production domain
+  "https://let-connect-skt-66s3.vercel.app", // Preview domain
+  "https://let-connect-o77rtmuo5-sanchari80s-projects.vercel.app" // Current preview domain
 ];
 
 if (process.env.NODE_ENV === "development") {
@@ -55,12 +55,17 @@ app.use(
   })
 );
 app.use(express.json());
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false,
+  })
+);
 
 // ==========================
 // ✅ Upload folder ensure
 // ==========================
-const uploadPath = path.join(__dirname, "uploads/messages");
+const uploadPath = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
 }
@@ -106,7 +111,10 @@ app.use("/api/advertise", require("./routes/advertise"));
 // ==========================
 app.use((err, req, res, next) => {
   console.error("❌ Error:", err.stack);
-  res.status(500).json({ error: "Something went wrong on the server!" });
+  res.status(500).json({
+    error: "Something went wrong on the server!",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+  });
 });
 
 // ==========================
@@ -152,7 +160,9 @@ io.on("connection", (socket) => {
           text: msg.text,
         });
         await newMessage.save();
+
         io.to(convo._id.toString()).emit("receiveMessage", newMessage);
+        console.log(`📩 Message sent in room ${convo._id}`);
       } else {
         console.log("🕒 Conversation not accepted yet, message pending...");
       }
