@@ -32,8 +32,13 @@ export default function ChangePasswordForm() {
       setOldPassword("");
       setNewPassword("");
     } catch (err: any) {
-      console.error("❌ Change password error:", err.response?.data || err.message || err);
-      setMessage(`❌ Error: ${err.response?.data?.error || "Password change failed"}`);
+      console.error(
+        "❌ Change password error:",
+        err.response?.data || err.message || err
+      );
+      setMessage(
+        `❌ Error: ${err.response?.data?.error || "Password change failed"}`
+      );
     } finally {
       setLoading(false);
     }
