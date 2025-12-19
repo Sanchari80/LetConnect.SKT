@@ -16,7 +16,7 @@ function verifyToken(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { _id, email, role }
+    req.user = decoded; // { id, email, role }
     next();
   } catch (err) {
     return res.status(400).json({ error: "Invalid token" });
@@ -64,7 +64,14 @@ router.post("/signup", async (req, res) => {
 
     const safeUser = await User.findById(user._id).select("-password");
 
-    res.status(201).json({ message: "✅ Signup successful", user: safeUser });
+    // ✅ Unified JWT payload (always use "id")
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(201).json({ message: "✅ Signup successful", token, user: safeUser });
   } catch (err) {
     console.error("❌ Signup error:", err.message);
     res.status(500).json({ error: "Signup failed" });
@@ -90,9 +97,9 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
 
-    // ✅ JWT payload এ role থাকবে
+    // ✅ Unified JWT payload (always use "id")
     const token = jwt.sign(
-      { _id: user._id, email: user.email, role: user.role },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -111,7 +118,7 @@ router.post("/login", async (req, res) => {
 // ==========================
 router.get("/me", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
+    const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json(user);
   } catch (err) {
@@ -133,7 +140,7 @@ router.put("/change-password", verifyToken, async (req, res) => {
         .json({ error: "Both old and new password required" });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
@@ -160,15 +167,12 @@ router.post("/forgot-password", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Reset token তৈরি করো
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 
-    // Reset link
     const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
-    // Email পাঠানো (nodemailer দিয়ে)
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -200,11 +204,11 @@ router.post("/reset-password/:token", async (req, res) => {
     const { newPassword } = req.body;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded._id) {
+    if (!decoded || !decoded.id) {
       return res.status(400).json({ error: "Invalid or expired token" });
     }
 
-    const user = await User.findById(decoded._id);
+    const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     user.password = await bcrypt.hash(newPassword, 10);
