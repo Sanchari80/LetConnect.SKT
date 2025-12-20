@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import SilverButton from "../components/SilverButton"; // ✅ fixed path
 import Image from "next/image";
+import SilverButton from "../components/SilverButton";
 
 export default function Page() {
   return (
@@ -11,10 +11,8 @@ export default function Page() {
         {/* Title */}
         <h1
           className="
+            glitch-title
             text-6xl italic font-extrabold mb-6 text-center
-            bg-clip-text text-transparent
-            bg-gradient-to-r from-gray-200 via-gray-400 to-gray-600
-            animate-bounce
           "
         >
           LetConnect

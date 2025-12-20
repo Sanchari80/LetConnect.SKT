@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import api from "@utils/api"; // ✅ axios instance with interceptor
 
 export default function LoginPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,25 +28,14 @@ export default function LoginPage() {
       const data = res.data;
       console.log("✅ Login response:", data);
 
-      if (data.token) {
-        // ✅ Save token persistently
-        localStorage.setItem("token", data.token);
-      }
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
+      if (data.token) localStorage.setItem("token", data.token);
+      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 
       setMessage("✅ Login successful! Redirecting...");
-
-      // ✅ Instead of window.location.href, use router push for Next.js
-      setTimeout(() => {
-        window.location.replace("/feed");
-      }, 1500);
+      setTimeout(() => router.push("/feed"), 1500);
     } catch (err: any) {
       console.error("❌ Login error:", err.response?.data || err.message);
-      setMessage(
-        `❌ Error: ${err.response?.data?.error || err.message || "Login failed"}`
-      );
+      setMessage("❌ Login failed. Please check your email and password.");
     } finally {
       setLoading(false);
     }
@@ -85,7 +76,7 @@ export default function LoginPage() {
 
       <p
         className="mt-4 text-center text-sm text-blue-400 cursor-pointer hover:underline"
-        onClick={() => (window.location.href = "/forgot-password")}
+        onClick={() => router.push("/forgot-password")}
       >
         Forgot your password?
       </p>

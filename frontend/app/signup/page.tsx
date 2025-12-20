@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import api from "@utils/api"; // ✅ fixed alias import
+import { useRouter } from "next/navigation";
+import api from "@utils/api"; // ✅ axios instance with interceptor
 
 export default function SignupPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,22 +20,30 @@ export default function SignupPage() {
     setLoading(true);
     setMessage("");
 
+    if (formData.password.trim() !== formData.confirmPassword.trim()) {
+      setMessage("❌ Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log("Using API URL:", process.env.NEXT_PUBLIC_API_URL);
 
-      // ✅ Backend expects { username, email, password }
-      const res = await api.post("/auth/signup", formData);
+      const res = await api.post("/auth/signup", {
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        password: formData.password.trim(),
+      });
+
       console.log("✅ Signup response:", res.data);
 
       setMessage("✅ Signup successful! Redirecting...");
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 1500);
+      setTimeout(() => router.push("/login"), 1500);
     } catch (err: any) {
       console.error("❌ Signup error:", err.response?.data || err.message);
       setMessage(
-        `❌ Error: ${
-          err.response?.data?.error || err.message || "Error connecting to backend"
+        `❌ Signup failed: ${
+          err.response?.data?.error || "Please try again."
         }`
       );
     } finally {
@@ -70,6 +81,16 @@ export default function SignupPage() {
           value={formData.password}
           onChange={(e) =>
             setFormData({ ...formData, password: e.target.value })
+          }
+          required
+          className="border p-2 rounded bg-gray-800 text-white"
+        />
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          value={formData.confirmPassword}
+          onChange={(e) =>
+            setFormData({ ...formData, confirmPassword: e.target.value })
           }
           required
           className="border p-2 rounded bg-gray-800 text-white"

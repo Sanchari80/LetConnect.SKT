@@ -15,10 +15,10 @@ export default function ProfilePage() {
   const [statuses, setStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const router = useRouter();
-
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
+  const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const fetchProfile = async () => {
     try {
@@ -26,10 +26,10 @@ export default function ProfilePage() {
       setUser(resUser.data);
 
       const resCv = await api.get("/cv/my-cv");
-      setCv(resCv.data.cv);
+      setCv(resCv.data?.cv || resCv.data || null);
 
       const resStatuses = await api.get("/status/my-statuses");
-      setStatuses(resStatuses.data);
+      setStatuses(resStatuses.data?.statuses || resStatuses.data || []);
     } catch (err: any) {
       if (err.response?.status === 401) {
         localStorage.clear();
@@ -53,29 +53,47 @@ export default function ProfilePage() {
 
   const handleProfileUpload = async () => {
     if (!profileFile) return;
-    const formData = new FormData();
-    formData.append("profileImage", profileFile);
-    await api.post("/profile/upload-image", formData);
-    alert("✅ Profile picture updated!");
-    fetchProfile();
+    try {
+      const formData = new FormData();
+      formData.append("profileImage", profileFile);
+      await api.post("/profile/upload-image", formData);
+      alert("✅ Profile picture updated!");
+      fetchProfile();
+    } catch (err) {
+      console.error("❌ Upload error:", err);
+    }
   };
 
   const handleCvUpload = async () => {
     if (!cvFile) return;
-    const formData = new FormData();
-    formData.append("cv", cvFile);
-    await api.post("/cv/upload", formData);
-    alert("✅ CV uploaded!");
-    fetchProfile();
+    try {
+      const formData = new FormData();
+      formData.append("cv", cvFile);
+      await api.post("/cv/upload", formData);
+      alert("✅ CV uploaded!");
+      fetchProfile();
+    } catch (err) {
+      console.error("❌ CV upload error:", err);
+    }
+  };
+
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}/profile/${user._id || user.id}`;
+    navigator.clipboard.writeText(link);
+    setMessage("✅ Profile link copied!");
+  };
+
+  const handleCustomizeProfile = () => {
+    alert("🎨 Customize profile clicked!");
   };
 
   if (loading) return <p className="text-center text-gray-400">⏳ Loading profile...</p>;
   if (!user) return <p className="text-center text-red-400">❌ No profile data found</p>;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-900 text-white px-6 py-10">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 bg-gray-800 shadow-md">
+      <header className="flex items-center justify-between py-4 bg-gray-800 shadow-md px-4 rounded mb-8">
         <h1 className="text-2xl font-bold">LetConnect</h1>
         <div className="flex items-center gap-4">
           <input
@@ -92,94 +110,84 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <div className="px-6 py-10">
-        {/* User Info */}
-        <div className="bg-gray-800 p-6 rounded shadow-md w-full max-w-md mb-6 text-center">
-          <img
-            src={user.profilePhotoUrl ? getMediaURL(user.profilePhotoUrl) : "/default-avatar.png"}
-            alt="Profile"
-            className="w-32 h-32 rounded-full border-4 border-gray-500 mx-auto mb-4"
-          />
-          <p className="mb-2"><strong>Name:</strong> {user.name}</p>
-          <p className="mb-2"><strong>Email:</strong> {user.email}</p>
-          <p className="mb-2"><strong>Role:</strong> {user.role}</p>
-          <p className="mb-2"><strong>Contact Number:</strong> {user.contact}</p>
+      {/* Profile Info */}
+      <div className="bg-gray-800 p-6 rounded shadow-md w-full max-w-md mx-auto mb-6 text-center">
+        <img
+          src={user.profilePhotoUrl ? getMediaURL(user.profilePhotoUrl) : "/default-avatar.png"}
+          alt="Profile"
+          className="w-32 h-32 rounded-full border-4 border-gray-500 mx-auto mb-4"
+        />
+        <p className="mb-2"><strong>Name:</strong> {user.name}</p>
+        <p className="mb-2"><strong>Email:</strong> {user.email}</p>
+        <p className="mb-2"><strong>Role:</strong> {user.role}</p>
+        <p className="mb-2"><strong>Contact:</strong> {user.contact}</p>
 
-          <div className="mt-4">
-            <input type="file" accept="image/*" onChange={(e) => setProfileFile(e.target.files?.[0] || null)} />
-            <SilverButton onClick={handleProfileUpload}>📸 Update Profile Picture</SilverButton>
-          </div>
-
-          <div className="flex gap-4 justify-center mt-4">
-            <SilverButton onClick={() => alert("LetConnect Request sent!")}>🤝 LetConnect Request</SilverButton>
-            <SilverButton onClick={() => router.push(`/chat/${user._id}`)}>💬 Message</SilverButton>
-          </div>
+        <div className="mt-4">
+          <input type="file" accept="image/*" onChange={(e) => setProfileFile(e.target.files?.[0] || null)} />
+          <SilverButton onClick={handleProfileUpload}>📸 Update Profile Picture</SilverButton>
         </div>
 
-        {/* CV Section */}
-        <div className="bg-gray-800 p-6 rounded shadow-md w-full max-w-md mb-6">
-          <h2 className="text-xl font-bold mb-4">📄 My CV</h2>
-          {cv ? (
-            <a href={getMediaURL(cv.file)} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">
-              Download CV
-            </a>
-          ) : (
-            <p className="text-gray-400">No CV uploaded</p>
-          )}
-          <div className="mt-4">
-            <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => setCvFile(e.target.files?.[0] || null)} />
-            <SilverButton onClick={handleCvUpload}>📤 Upload CV</SilverButton>
-          </div>
+        <div className="flex flex-wrap gap-4 justify-center mt-4">
+          <SilverButton onClick={() => alert("LetConnect Request sent!")}>🤝 LetConnect Request</SilverButton>
+          <SilverButton onClick={() => router.push(`/chat/${user._id || user.id}`)}>💬 Message</SilverButton>
+          <SilverButton onClick={handleCustomizeProfile}>🎨 Customize Profile</SilverButton>
+          <SilverButton onClick={handleCopyLink}>🔗 Copy Profile Link</SilverButton>
         </div>
 
-        {/* Skills Section */}
-        <div className="bg-gray-800 p-6 rounded shadow-md w-full max-w-md mb-6">
-          <h2 className="text-xl font-bold mb-4">🛠 Skills</h2>
-          {user.skills && user.skills.length > 0 ? (
-            <ul className="list-disc list-inside text-gray-300">
-              {user.skills.map((skill: string, i: number) => (
-                <li key={i}>{skill}</li>
+        {message && <p className="mt-4 text-sm text-yellow-400">{message}</p>}
+      </div>
+
+      {/* CV Section */}
+      <div className="bg-gray-800 p-6 rounded shadow-md w-full max-w-md mx-auto mb-6">
+        <h2 className="text-xl font-bold mb-4">📄 My CV</h2>
+        {cv ? (
+          <a href={getMediaURL(cv.file || cv)} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">
+            Download CV
+          </a>
+        ) : (
+          <p className="text-gray-400">No CV uploaded</p>
+        )}
+        <div className="mt-4">
+          <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => setCvFile(e.target.files?.[0] || null)} />
+          <SilverButton onClick={handleCvUpload}>📤 Upload CV</SilverButton>
+        </div>
+      </div>
+
+      {/* Skills Section */}
+      <div className="bg-gray-800 p-6 rounded shadow-md w-full max-w-md mx-auto mb-6">
+        <h2 className="text-xl font-bold mb-4">🛠 Skills</h2>
+        {user.skills?.length > 0 ? (
+          <ul className="list-disc list-inside text-gray-300">
+            {user.skills.map((skill: string, i: number) => (
+              <li key={i}>{skill}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-400">No skills added</p>
+        )}
+      </div>
+
+      {/* Statuses Section */}
+      <div className="bg-gray-800 p-6 rounded shadow-md w-full max-w-2xl mx-auto mb-6">
+        <h2 className="text-xl font-bold mb-4">📰 My Posts</h2>
+        {statuses.length === 0 ? (
+          <p className="text-gray-400">No posts yet</p>
+        ) : (
+          statuses.map((status) => (
+            <div key={status._id || status.id} className="border-b border-gray-700 pb-4 mb-4">
+              <p>{status.Text || status.text}</p>
+              {status.Image?.map((img: string, i: number) => (
+                <img key={i} src={getMediaURL(img)} className="w-40 h-40 object-cover rounded mt-2" />
               ))}
-            </ul>
-          ) : (
-            <p className="text-gray-400">No skills added</p>
-          )}
-        </div>
-
-        {/* Statuses Section */}
-        <div className="bg-gray-800 p-6 rounded shadow-md w-full max-w-2xl">
-          <h2 className="text-xl font-bold mb-4">📰 My Posts</h2>
-          {statuses.length === 0 ? (
-            <p className="text-gray-400">No posts yet</p>
-          ) : (
-            statuses.map((status) => (
-              <div key={status._id} className="border-b border-gray-700 pb-4 mb-4">
-                <p>{status.Text}</p>
-                {status.Image?.map((img: string, i: number) => (
-                  <img key={i} src={getMediaURL(img)} className="w-40 h-40 object-cover rounded mt-2" />
-                ))}
-                {status.Video && (
-                  <video controls src={getMediaURL(status.Video)} className="w-full mt-2 rounded" />
-                )}
-                <p className="text-sm text-gray-400 mt-2">
-                  👍 {status.Likes?.length || 0} Likes · 💬 {status.Comments?.length || 0} Comments
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Logout */}
-        <div className="mt-6">
-          <SilverButton
-            onClick={() => {
-              localStorage.clear();
-              router.push("/login");
-            }}
-          >
-            🔒 Logout
-          </SilverButton>
-        </div>
+              {status.Video && (
+                <video controls src={getMediaURL(status.Video)} className="w-full mt-2 rounded" />
+              )}
+              <p className="text-sm text-gray-400 mt-2">
+                👍 {status.Likes?.length || 0} Likes · 💬 {status.Comments?.length || 0} Comments
+              </p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

@@ -2,22 +2,34 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const User = require("../models/User");
 const nodemailer = require("nodemailer");
-const verifyToken = require("../middleware/verifyToken"); // ✅ use shared middleware
+
+const User = require("../models/User");
+const verifyToken = require("../middleware/verifyToken");
 
 // ==========================
-// ✅ Middleware: checkAdmin
+// ✅ Helpers
 // ==========================
+const signJwt = (payload, expiresIn = "7d") =>
+  jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
+
+const escapeRegex = (str) =>
+  str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const caseInsensitiveEmailQuery = (email) => ({
+  email: new RegExp("^" + escapeRegex(email) + "$", "i"),
+});
+
+const sanitizeUser = async (id) => User.findById(id).select("-password");
+
+// ✅ Admin guard
 function checkAdmin(req, res, next) {
-  if (req.user && req.user.role === "admin") {
-    return next();
-  }
+  if (req.user && req.user.role === "admin") return next();
   return res.status(403).json({ error: "Forbidden: Admins only" });
 }
 
 // ==========================
-// ✅ Signup (force user role)
+// ✅ Signup
 // ==========================
 router.post("/signup", async (req, res) => {
   try {
@@ -27,9 +39,7 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({
-      email: new RegExp("^" + email + "$", "i"),
-    });
+    const existingUser = await User.findOne(caseInsensitiveEmailQuery(email));
     if (existingUser) {
       return res.status(400).json({ error: "User already exists" });
     }
@@ -40,19 +50,13 @@ router.post("/signup", async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      role: "user", // 👈 সবসময় user হবে
+      role: "user",
     });
 
     await user.save();
+    const safeUser = await sanitizeUser(user._id);
 
-    const safeUser = await User.findById(user._id).select("-password");
-
-    // ✅ Unified JWT payload (always use "id")
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signJwt({ id: user._id, email: user.email, role: user.role });
 
     res.status(201).json({ message: "✅ Signup successful", token, user: safeUser });
   } catch (err) {
@@ -72,21 +76,22 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    const user = await User.findOne({
-      email: new RegExp("^" + email + "$", "i"),
-    });
-    if (!user) return res.status(400).json({ error: "Invalid credentials" });
+    console.log("Login attempt:", email);
+
+    const user = await User.findOne(caseInsensitiveEmailQuery(email));
+    if (!user) {
+      console.log("❌ No user found for:", email);
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
+    if (!isMatch) {
+      console.log("❌ Password mismatch for:", email);
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
 
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    const safeUser = await User.findById(user._id).select("-password");
+    const token = signJwt({ id: user._id, email: user.email, role: user.role });
+    const safeUser = await sanitizeUser(user._id);
 
     res.json({ token, user: safeUser });
   } catch (err) {
@@ -100,7 +105,7 @@ router.post("/login", async (req, res) => {
 // ==========================
 router.get("/me", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await sanitizeUser(req.user.id);
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json(user);
   } catch (err) {
@@ -142,18 +147,17 @@ router.put("/change-password", verifyToken, async (req, res) => {
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    if (!email) return res.status(400).json({ error: "Email is required" });
+
+    const user = await User.findOne(caseInsensitiveEmailQuery(email));
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = signJwt({ id: user._id }, "1h");
     const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
     });
 
     await transporter.sendMail({
@@ -177,6 +181,8 @@ router.post("/reset-password/:token", async (req, res) => {
   try {
     const { token } = req.params;
     const { newPassword } = req.body;
+
+    if (!newPassword) return res.status(400).json({ error: "New password is required" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded || !decoded.id) {
