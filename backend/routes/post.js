@@ -5,11 +5,39 @@ const Notification = require("../models/Notification");
 const verifyToken = require("../middleware/verifyToken"); // ✅ Secure middleware
 
 // ==========================
+// ✅ Create a post (with anonymous option)
+// ==========================
+router.post("/", verifyToken, async (req, res) => {
+  try {
+    const { content, image, anonymous } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: "Content is required" });
+    }
+
+    const post = await Post.create({
+      owner: req.user.id,          // ✅ সবসময় real user থেকে আসবে
+      content: content.trim(),
+      image,
+      anonymous: !!anonymous       // ✅ চাইলে hide করবে
+    });
+
+    const populated = await post.populate("owner", "username profileImage profession");
+    res.status(201).json({ message: "✅ Post created", post: populated });
+  } catch (err) {
+    console.error("❌ Create post error:", err.message);
+    res.status(500).json({ error: "Failed to create post" });
+  }
+});
+
+// ==========================
 // ✅ Get all posts
 // ==========================
 router.get("/", async (req, res) => {
   try {
-    const posts = await Post.find().sort({ createdAt: -1 }); // latest first
+    const posts = await Post.find()
+      .sort({ createdAt: -1 })
+      .populate("owner", "username profileImage profession"); // ✅ real info always available
     res.json(posts);
   } catch (err) {
     console.error("❌ Fetch posts error:", err.message);

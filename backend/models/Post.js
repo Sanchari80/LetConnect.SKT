@@ -5,6 +5,10 @@ const postSchema = new mongoose.Schema(
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     content: { type: String, required: true, trim: true },
     image: { type: String }, // optional image path
+
+    // ✅ নতুন field: user চাইলে post কে Anonymous করতে পারবে
+    anonymous: { type: Boolean, default: false },
+
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [
       {

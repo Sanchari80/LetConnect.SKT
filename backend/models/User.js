@@ -2,52 +2,52 @@ const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema(
   {
-    username: {
+    Name: {
       type: String,
       required: true,
       trim: true,
     },
-    email: {
+    Email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true, // ✅ সব email lowercase হবে
     },
-    password: {
+    Password: {
       type: String,
       required: true,
     },
-    role: {
+    Role: {
       type: String,
       enum: ["user", "admin", "moderator"], // ✅ system roles
       default: "user",                      // signup এ সবসময় user হবে
     },
-    profession: {
+    Profession: {
       type: String, // e.g., Developer, Designer, Student
       trim: true,
     },
-    skills: [
+    Skills: [
       {
         type: String, // e.g., "React", "Node.js", "MongoDB"
         trim: true,
       },
     ],
-    profileImage: {
+    ProfileImage: {
       type: String,
       default: "/default-avatar.png", // ✅ default avatar
     },
-    cvFile: {
+    CvFile: {
       type: String, // ✅ CV file path (optional)
       default: null,
     },
-    contact: {
+    Contact: {
       type: String,
     },
-    blocked: {
+    Blocked: {
       type: Boolean, // ✅ admin block/unblock করতে পারবে
       default: false,
     },
-    createdAt: {
+    CreatedAt: {
       type: Date,
       default: Date.now,
     },
@@ -55,7 +55,7 @@ const UserSchema = new mongoose.Schema(
   { collection: "users" }
 );
 
-// ✅ Indexes for faster search
-UserSchema.index({ username: "text", profession: "text", skills: "text" });
+// ✅ Indexes for faster search (capitalized fields)
+UserSchema.index({ Name: "text", Role: "text", Skills: "text" });
 
 module.exports = mongoose.model("User", UserSchema);

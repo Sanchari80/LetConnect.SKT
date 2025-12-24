@@ -2,24 +2,30 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+// ==========================
 // ✅ Ensure subfolders exist
+// ==========================
 const baseUploadPath = path.join(__dirname, "../uploads");
 const profilePath = path.join(baseUploadPath, "profile");
 const cvPath = path.join(baseUploadPath, "cv");
 const messagePath = path.join(baseUploadPath, "messages");
 
+// ফোল্ডারগুলো না থাকলে তৈরি করে দাও
 [baseUploadPath, profilePath, cvPath, messagePath].forEach((p) => {
   if (!fs.existsSync(p)) {
     fs.mkdirSync(p, { recursive: true });
   }
 });
 
+// ==========================
 // ✅ Multer storage setup (dynamic folder based on fieldname)
+// ==========================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === "profileImage") {
       cb(null, profilePath);
-    } else if (file.fieldname === "cv") {
+    } else if (file.fieldname === "cvFile" || file.fieldname === "cv") {
+      // 👉 cvFile বা cv দুই নামেই কাজ করবে
       cb(null, cvPath);
     } else if (file.fieldname === "attachments") {
       cb(null, messagePath);
@@ -28,11 +34,14 @@ const storage = multer.diskStorage({
     }
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
+    const safeName = file.originalname.replace(/\s+/g, "-").toLowerCase();
+    cb(null, `${Date.now()}-${safeName}`);
   },
 });
 
+// ==========================
 // ✅ File filter (allow images, pdf/docx, audio, video)
+// ==========================
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
     "image/jpeg",
@@ -52,7 +61,9 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// ==========================
 // ✅ Multer instance
+// ==========================
 const upload = multer({
   storage,
   fileFilter,

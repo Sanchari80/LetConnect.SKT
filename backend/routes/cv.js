@@ -1,14 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const verifyToken = require("../middleware/verifyToken"); // ✅ Updated middleware
+const verifyToken = require("../middleware/verifyToken");
 
 // ✅ CV model import
 const CV = require("../models/CV");
 
-// ✅ User model import
-const User = require("../models/User");
-
-// ✅ Multer middleware
+// ✅ Multer middleware (for file upload)
 const upload = require("../middleware/upload");
 
 // ✅ Controller functions
@@ -17,7 +14,7 @@ const { uploadCV, deleteCV, getMyCV } = require("../Controller/cvController");
 // ==========================
 // ✅ CV Upload (replace old if exists)
 // ==========================
-router.post("/upload", verifyToken, upload.single("cv"), uploadCV);
+router.post("/upload", verifyToken, upload.single("cvFile"), uploadCV);
 
 // ==========================
 // ✅ CV Delete (manual delete option)
@@ -33,12 +30,12 @@ router.get("/preview/:userId", verifyToken, async (req, res) => {
     if (!cv) return res.status(404).json({ message: "CV not found" });
 
     res.json({
-      name: cv.name,
-      email: cv.email,
-      education: cv.education,
-      experience: cv.experience,
-      skills: cv.skills,
-      coverLetter: cv.coverLetter || "",
+      Name: cv.Name,
+      Email: cv.Email,
+      Education: cv.Education,
+      Experience: cv.Experience,
+      Skills: cv.Skills,
+      CoverLetter: cv.CoverLetter || "",
     });
   } catch (err) {
     console.error("❌ Error previewing CV:", err);
@@ -54,7 +51,7 @@ router.get("/download/:userId", verifyToken, async (req, res) => {
     const cv = await CV.findOne({ user: req.params.userId });
     if (!cv) return res.status(404).json({ message: "CV not found" });
 
-    // ✅ চাইলে এখানে PDF বানিয়ে পাঠাতে পারো
+    // 👉 চাইলে এখানে PDF বানিয়ে পাঠাতে পারো
     res.json({
       message: "Download CV",
       cv,

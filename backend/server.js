@@ -63,13 +63,21 @@ app.use(
 );
 
 // ==========================
-// ✅ Upload folder ensure
+// ✅ Upload folders ensure
 // ==========================
-const uploadPath = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
-}
-app.use("/uploads", express.static(uploadPath));
+const uploadBase = path.join(__dirname, "uploads");
+const profilePath = path.join(uploadBase, "profile");
+const cvPath = path.join(uploadBase, "cv");
+const messagePath = path.join(uploadBase, "messages");
+
+[uploadBase, profilePath, cvPath, messagePath].forEach((p) => {
+  if (!fs.existsSync(p)) {
+    fs.mkdirSync(p, { recursive: true });
+  }
+});
+
+// ✅ Static serve for uploads
+app.use("/uploads", express.static(uploadBase));
 
 // ==========================
 // ✅ MongoDB connect

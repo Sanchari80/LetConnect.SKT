@@ -9,48 +9,48 @@ const cvSchema = new mongoose.Schema(
     },
 
     // ✅ File info
-    filename: {
+    FileName: {
       type: String,
       required: true,
     },
-    fileType: {
+    FileType: {
       type: String,
       default: "",
     },
-    fileSize: {
+    FileSize: {
       type: Number,
       default: 0,
     },
-    uploadedAt: {
+    UploadedAt: {
       type: Date,
       default: Date.now,
     },
 
     // ✅ CV details
-    name: {
+    Name: {
       type: String,
       trim: true,
     },
-    email: {
+    Email: {
       type: String,
       trim: true,
       lowercase: true,
     },
-    education: {
+    Education: {
       type: String,
       trim: true,
     },
-    experience: {
+    Experience: {
       type: String,
       trim: true,
     },
-    skills: [
+    Skills: [
       {
         type: String,
         trim: true,
       },
     ],
-    coverLetter: {
+    CoverLetter: {
       type: String,
       trim: true,
     },
