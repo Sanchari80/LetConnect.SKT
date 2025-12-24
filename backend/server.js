@@ -17,7 +17,7 @@ const { Server } = require("socket.io");
 // ✅ Models
 // ==========================
 const Conversation = require("./models/Conversation");
-const Message = require("./models/message");
+const Message = require("./models/Message");
 const Status = require("./models/Status");
 
 // ==========================
@@ -91,7 +91,7 @@ mongoose
 // ✅ Default route
 // ==========================
 app.get("/", (req, res) => {
-  res.json({ status: "LetConnect.SKT backend running" });
+  res.json({ success: true, message: "LetConnect.SKT backend running" });
 });
 
 // ==========================
@@ -120,7 +120,8 @@ app.use("/api/advertise", require("./routes/advertise"));
 app.use((err, req, res, next) => {
   console.error("❌ Error:", err.stack);
   res.status(500).json({
-    error: "Something went wrong on the server!",
+    success: false,
+    message: "Something went wrong on the server!",
     ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
@@ -146,6 +147,8 @@ io.on("connection", (socket) => {
 
   socket.on("sendMessage", async (msg) => {
     try {
+      if (!msg.text?.trim()) return; // ✅ prevent empty messages
+
       let convo = await Conversation.findOne({
         participants: { $all: [msg.sender, msg.to] },
       });

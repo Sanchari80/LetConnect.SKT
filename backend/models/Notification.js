@@ -15,8 +15,8 @@ const NotificationSchema = new mongoose.Schema(
         "comment",
         "share",
         "advertise_approved",
-        "advertise_rejected"
-      ], // 👈 advertise approve/reject আলাদা করে যোগ করা হলো
+        "advertise_rejected",
+      ],
       required: true,
     },
 
@@ -31,10 +31,8 @@ const NotificationSchema = new mongoose.Schema(
 
     // read/unread status
     isRead: { type: Boolean, default: false },
-
-    createdAt: { type: Date, default: Date.now },
   },
-  { collection: "notifications" }
+  { collection: "notifications", timestamps: true } // ✅ auto createdAt & updatedAt
 );
 
 module.exports = mongoose.model("Notification", NotificationSchema);

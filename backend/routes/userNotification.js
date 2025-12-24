@@ -4,16 +4,16 @@ const Notification = require("../models/Notification");
 const verifyToken = require("../middleware/verifyToken"); // ✅ use shared middleware
 
 // ✅ Get notifications for logged-in user only
-router.get("/notifications", verifyToken, async (req, res) => {
+router.get("/", verifyToken, async (req, res) => {
   try {
     const notifications = await Notification.find({ user: req.user.id })
       .sort({ createdAt: -1 })
       .populate("fromUser", "username email");
 
-    res.json(notifications);
+    res.json({ success: true, notifications });
   } catch (err) {
     console.error("❌ Fetch notifications error:", err.message);
-    res.status(500).json({ error: "Failed to fetch notifications" });
+    res.status(500).json({ success: false, message: "Failed to fetch notifications" });
   }
 });
 

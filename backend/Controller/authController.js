@@ -27,13 +27,13 @@ exports.signup = async (req, res) => {
 
     // Basic validation
     if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+      return res.status(400).json({ success: false, message: "Email and password are required" });
     }
 
     // Check if user already exists
     const exists = await User.findOne({ email });
     if (exists) {
-      return res.status(409).json({ error: "Email already in use" });
+      return res.status(409).json({ success: false, message: "Email already in use" });
     }
 
     // Hash password
@@ -53,7 +53,8 @@ exports.signup = async (req, res) => {
     const token = generateToken(user);
 
     res.status(201).json({
-      message: "✅ Signup successful",
+      success: true,
+      message: "Signup successful",
       token,
       user: {
         id: user._id,
@@ -64,7 +65,7 @@ exports.signup = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Signup error:", err.message);
-    res.status(500).json({ error: "Signup failed" });
+    res.status(500).json({ success: false, message: "Signup failed" });
   }
 };
 
@@ -79,26 +80,27 @@ exports.login = async (req, res) => {
 
     // Basic validation
     if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+      return res.status(400).json({ success: false, message: "Email and password are required" });
     }
 
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     // Compare password
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return res.status(401).json({ error: "Invalid password" });
+      return res.status(401).json({ success: false, message: "Invalid password" });
     }
 
     // Generate JWT
     const token = generateToken(user);
 
     res.json({
-      message: "✅ Login successful",
+      success: true,
+      message: ""OMG! You come back ,Really! Login successful! Let's Go..."",
       token,
       user: {
         id: user._id,
@@ -109,6 +111,6 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Login error:", err.message);
-    res.status(500).json({ error: "Login failed" });
+    res.status(500).json({ success: false, message: "Login failed" });
   }
 };

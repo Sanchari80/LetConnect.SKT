@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Notification = require("../models/Notification");
-const verifyToken = require("../middleware/verifyToken"); // ✅ use shared middleware
+const verifyToken = require("../middleware/verifyToken"); // ✅ shared middleware
 
 // ==========================
-// ✅ Get notifications for logged-in user only
+// ✅ Get notifications for logged-in user
 // ==========================
 router.get("/", verifyToken, async (req, res) => {
   try {
@@ -13,10 +13,10 @@ router.get("/", verifyToken, async (req, res) => {
       .populate("post", "content")
       .sort({ createdAt: -1 });
 
-    res.json(notifications);
+    res.json({ success: true, notifications });
   } catch (err) {
     console.error("❌ Fetch notifications error:", err.message);
-    res.status(500).json({ error: "Failed to fetch notifications" });
+    res.status(500).json({ success: false, message: "Failed to fetch notifications" });
   }
 });
 
@@ -26,20 +26,22 @@ router.get("/", verifyToken, async (req, res) => {
 router.post("/:id/read", verifyToken, async (req, res) => {
   try {
     const notif = await Notification.findById(req.params.id);
-    if (!notif) return res.status(404).json({ error: "Notification not found" });
+    if (!notif) {
+      return res.status(404).json({ success: false, message: "Notification not found" });
+    }
 
     // ✅ Ensure only owner can mark as read
     if (notif.user.toString() !== req.user.id.toString()) {
-      return res.status(403).json({ error: "Unauthorized" });
+      return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
     notif.isRead = true;
     await notif.save();
 
-    res.json({ success: true });
+    res.json({ success: true, message: "Notification marked as read", notification: notif });
   } catch (err) {
     console.error("❌ Mark as read error:", err.message);
-    res.status(500).json({ error: "Failed to mark as read" });
+    res.status(500).json({ success: false, message: "Failed to mark as read" });
   }
 });
 

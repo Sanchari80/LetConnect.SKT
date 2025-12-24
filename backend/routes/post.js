@@ -12,21 +12,21 @@ router.post("/", verifyToken, async (req, res) => {
     const { content, image, anonymous } = req.body;
 
     if (!content || !content.trim()) {
-      return res.status(400).json({ error: "Content is required" });
+      return res.status(400).json({ success: false, message: "Content is required" });
     }
 
     const post = await Post.create({
-      owner: req.user.id,          // ✅ সবসময় real user থেকে আসবে
+      owner: req.user.id,
       content: content.trim(),
       image,
-      anonymous: !!anonymous       // ✅ চাইলে hide করবে
+      anonymous: !!anonymous,
     });
 
     const populated = await post.populate("owner", "username profileImage profession");
-    res.status(201).json({ message: "✅ Post created", post: populated });
+    res.status(201).json({ success: true, message: "Post created", post: populated });
   } catch (err) {
     console.error("❌ Create post error:", err.message);
-    res.status(500).json({ error: "Failed to create post" });
+    res.status(500).json({ success: false, message: "Failed to create post" });
   }
 });
 
@@ -37,11 +37,12 @@ router.get("/", async (req, res) => {
   try {
     const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate("owner", "username profileImage profession"); // ✅ real info always available
-    res.json(posts);
+      .populate("owner", "username profileImage profession");
+
+    res.json({ success: true, posts });
   } catch (err) {
     console.error("❌ Fetch posts error:", err.message);
-    res.status(500).json({ error: "Failed to fetch posts" });
+    res.status(500).json({ success: false, message: "Failed to fetch posts" });
   }
 });
 
@@ -50,16 +51,14 @@ router.get("/", async (req, res) => {
 // ==========================
 router.post("/:id/like", verifyToken, async (req, res) => {
   try {
-    const userId = req.user.id; // ✅ from token
+    const userId = req.user.id;
     const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ error: "Post not found" });
+    if (!post) return res.status(404).json({ success: false, message: "Post not found" });
 
-    // prevent duplicate like
     if (!post.likes.includes(userId)) {
       post.likes.push(userId);
       await post.save();
 
-      // ✅ Trigger notification → post liked
       await new Notification({
         user: post.owner,
         type: "like",
@@ -69,10 +68,10 @@ router.post("/:id/like", verifyToken, async (req, res) => {
       }).save();
     }
 
-    res.json({ success: true, post });
+    res.json({ success: true, message: "Post liked", post });
   } catch (err) {
     console.error("❌ Like error:", err.message);
-    res.status(500).json({ error: "Failed to like post" });
+    res.status(500).json({ success: false, message: "Failed to like post" });
   }
 });
 
@@ -81,16 +80,15 @@ router.post("/:id/like", verifyToken, async (req, res) => {
 // ==========================
 router.post("/:id/comment", verifyToken, async (req, res) => {
   try {
-    const userId = req.user.id; // ✅ from token
+    const userId = req.user.id;
     const { text } = req.body;
     const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ error: "Post not found" });
+    if (!post) return res.status(404).json({ success: false, message: "Post not found" });
 
     const comment = { user: userId, text, createdAt: new Date() };
     post.comments.push(comment);
     await post.save();
 
-    // ✅ Trigger notification → post commented
     await new Notification({
       user: post.owner,
       type: "comment",
@@ -99,10 +97,10 @@ router.post("/:id/comment", verifyToken, async (req, res) => {
       message: "commented on your post",
     }).save();
 
-    res.json({ success: true, post });
+    res.json({ success: true, message: "Comment added", post });
   } catch (err) {
     console.error("❌ Comment error:", err.message);
-    res.status(500).json({ error: "Failed to comment on post" });
+    res.status(500).json({ success: false, message: "Failed to comment on post" });
   }
 });
 
@@ -111,14 +109,13 @@ router.post("/:id/comment", verifyToken, async (req, res) => {
 // ==========================
 router.post("/:id/share", verifyToken, async (req, res) => {
   try {
-    const userId = req.user.id; // ✅ from token
+    const userId = req.user.id;
     const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ error: "Post not found" });
+    if (!post) return res.status(404).json({ success: false, message: "Post not found" });
 
     post.shares = (post.shares || 0) + 1;
     await post.save();
 
-    // ✅ Trigger notification → post shared
     await new Notification({
       user: post.owner,
       type: "share",
@@ -127,10 +124,10 @@ router.post("/:id/share", verifyToken, async (req, res) => {
       message: "shared your post",
     }).save();
 
-    res.json({ success: true, post });
+    res.json({ success: true, message: "Post shared", post });
   } catch (err) {
     console.error("❌ Share error:", err.message);
-    res.status(500).json({ error: "Failed to share post" });
+    res.status(500).json({ success: false, message: "Failed to share post" });
   }
 });
 
