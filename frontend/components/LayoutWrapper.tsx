@@ -18,9 +18,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {showFloatingLogo && (
         <Image
           src="/skt-logo.jpg"
-          alt="SKT Logo"
+          alt="LetConnect SKT Logo"
           width={60}
           height={60}
+          priority
           className="skt-floating-logo"
         />
       )}
