@@ -34,7 +34,7 @@ export default function SilverButton({
         text-black text-sm
         font-light italic
         px-6 py-2
-        transition-transform duration-700
+        transition-transform duration-300
         hover:rotate-360
         focus:outline-none
       "

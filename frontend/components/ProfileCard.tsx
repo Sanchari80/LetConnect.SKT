@@ -19,6 +19,7 @@ export default function ProfileCard({ user, currentUser }: ProfileCardProps) {
   const [status, setStatus] = useState<string>(user.status || "pending");
   const [loading, setLoading] = useState<boolean>(false);
   const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [newName, setNewName] = useState(user.name);
   const [showCustomize, setShowCustomize] = useState(false);
@@ -55,6 +56,31 @@ export default function ProfileCard({ user, currentUser }: ProfileCardProps) {
     }
   };
 
+  // ✅ Upload CV
+  const handleCvUpload = async () => {
+    if (!cvFile) return;
+    const formData = new FormData();
+    formData.append("cvFile", cvFile); // backend expects "cvFile"
+    try {
+      await api.post("/cv/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      alert("✅ CV uploaded successfully!");
+    } catch (err: any) {
+      console.error("❌ CV upload error:", err.response?.data || err.message);
+    }
+  };
+
+  // ✅ Delete CV
+  const handleCvDelete = async () => {
+    try {
+      await api.delete("/cv/delete");
+      alert("🗑 CV deleted successfully!");
+    } catch (err: any) {
+      console.error("❌ CV delete error:", err.response?.data || err.message);
+    }
+  };
+
   return (
     <div className="bg-gray-800 p-6 rounded shadow-md text-center">
       {/* Profile info */}
@@ -69,6 +95,7 @@ export default function ProfileCard({ user, currentUser }: ProfileCardProps) {
       {/* ✅ Upload/Delete/Customize/Copy buttons */}
       {currentUser._id === user._id && (
         <div className="mt-6 space-y-4">
+          {/* Profile image upload */}
           <div>
             <input
               type="file"
@@ -83,6 +110,7 @@ export default function ProfileCard({ user, currentUser }: ProfileCardProps) {
             </button>
           </div>
 
+          {/* Profile image delete */}
           <div>
             <button
               onClick={handleDeleteProfilePic}
@@ -92,6 +120,32 @@ export default function ProfileCard({ user, currentUser }: ProfileCardProps) {
             </button>
           </div>
 
+          {/* CV upload */}
+          <div>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+            />
+            <button
+              onClick={handleCvUpload}
+              className="bg-green-700 text-white px-4 py-2 rounded mt-2"
+            >
+              📄 Upload CV
+            </button>
+          </div>
+
+          {/* CV delete */}
+          <div>
+            <button
+              onClick={handleCvDelete}
+              className="bg-red-700 text-white px-4 py-2 rounded mt-2"
+            >
+              🗑 Delete CV
+            </button>
+          </div>
+
+          {/* Customize profile */}
           <div>
             <button
               onClick={() => setShowCustomize(true)}

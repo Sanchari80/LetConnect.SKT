@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import api from "../utils/api"; // ✅ shared axios instance
 
 interface Comment {
@@ -10,13 +11,14 @@ interface Comment {
 
 interface Status {
   _id: string;
-  UserId?: { _id: string; name: string };
-  Text: string;
-  Image?: string[];
-  Video?: string;
-  Likes?: string[];
-  Shares?: string[];
-  Comments?: Comment[];
+  owner?: { _id: string; username: string; profileImage?: string }; // ✅ backend থেকে আসবে
+  content: string;
+  image?: string[];
+  video?: string;
+  likes?: string[];
+  shares?: string[];
+  comments?: Comment[];
+  anonymous?: boolean; // ✅ নতুন field
   createdAt: string;
 }
 
@@ -26,11 +28,12 @@ interface Props {
 }
 
 const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
+  const router = useRouter();
   const [commentText, setCommentText] = useState("");
 
   const handleLike = async () => {
     try {
-      await api.post(`/status/${status._id}/like`);
+      await api.post(`/posts/${status._id}/like`);
       refreshFeed();
     } catch (err: any) {
       console.error("❌ Like error:", err.response?.data || err.message);
@@ -39,7 +42,7 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
 
   const handleShare = async () => {
     try {
-      await api.post(`/status/${status._id}/share`);
+      await api.post(`/posts/${status._id}/share`);
       refreshFeed();
     } catch (err: any) {
       console.error("❌ Share error:", err.response?.data || err.message);
@@ -49,7 +52,7 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
   const handleComment = async () => {
     if (!commentText.trim()) return;
     try {
-      await api.post(`/status/${status._id}/comment`, { text: commentText });
+      await api.post(`/posts/${status._id}/comment`, { text: commentText });
       setCommentText("");
       refreshFeed();
     } catch (err: any) {
@@ -66,17 +69,26 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
     <div className="status-card border rounded p-4 mb-6 shadow bg-gray-800 text-white">
       {/* Header */}
       <div className="status-header flex justify-between mb-2">
-        <strong>{status.UserId?.name || "Anonymous"}</strong>
+        {status.anonymous ? (
+          <strong className="text-gray-400">Anonymous</strong>
+        ) : (
+          <button
+            onClick={() => router.push(`/profile/${status.owner?._id}`)}
+            className="font-bold text-purple-400 hover:underline"
+          >
+            {status.owner?.username}
+          </button>
+        )}
         <span className="text-sm text-gray-400">
           {new Date(status.createdAt).toLocaleString()}
         </span>
       </div>
 
       {/* Text */}
-      <p className="mb-2">{status.Text}</p>
+      <p className="mb-2">{status.content}</p>
 
       {/* Images */}
-      {status.Image?.map((img, idx) => (
+      {status.image?.map((img, idx) => (
         <img
           key={idx}
           src={getMediaURL(img)}
@@ -86,9 +98,9 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
       ))}
 
       {/* Video */}
-      {status.Video && (
+      {status.video && (
         <video
-          src={getMediaURL(status.Video)}
+          src={getMediaURL(status.video)}
           controls
           className="status-video w-full rounded mb-2"
         />
@@ -100,13 +112,13 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
           onClick={handleLike}
           className="hover:text-purple-400 transition"
         >
-          👍 Like ({status.Likes?.length || 0})
+          👍 Like ({status.likes?.length || 0})
         </button>
         <button
           onClick={handleShare}
           className="hover:text-green-400 transition"
         >
-          🔄 Share ({status.Shares?.length || 0})
+          🔄 Share ({status.shares?.length || 0})
         </button>
       </div>
 
@@ -129,7 +141,7 @@ const StatusCard: React.FC<Props> = ({ status, refreshFeed }) => {
 
       {/* Comments */}
       <div className="comments space-y-1">
-        {status.Comments?.map((c, idx) => (
+        {status.comments?.map((c, idx) => (
           <p key={idx} className="text-sm">
             <strong>{c.user?.name || "Anonymous"}:</strong> {c.text}
           </p>

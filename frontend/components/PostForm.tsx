@@ -11,6 +11,7 @@ const PostForm: React.FC<Props> = ({ refreshFeed }) => {
   const [text, setText] = useState("");
   const [images, setImages] = useState<FileList | null>(null);
   const [video, setVideo] = useState<File | null>(null);
+  const [anonymous, setAnonymous] = useState(false); // ✅ নতুন state
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,27 +19,30 @@ const PostForm: React.FC<Props> = ({ refreshFeed }) => {
     if (!text.trim() && !images && !video) return;
 
     const formData = new FormData();
-    formData.append("Text", text);
+    formData.append("content", text); // ✅ backend expects "content"
 
     if (images) {
       Array.from(images).forEach((file) => {
-        formData.append("Image", file);
+        formData.append("image", file);
       });
     }
 
     if (video) {
-      formData.append("Video", video);
+      formData.append("video", video);
     }
+
+    // ✅ Anonymous flag পাঠানো হবে
+    formData.append("anonymous", String(anonymous));
 
     try {
       setLoading(true);
-      // ✅ Use api instance
-      await api.post("/status", formData, {
+      await api.post("/posts", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setText("");
       setImages(null);
       setVideo(null);
+      setAnonymous(false);
       refreshFeed(); // reload feed after new post
     } catch (err: any) {
       console.error("❌ Post create error:", err.response?.data || err.message);
@@ -81,6 +85,16 @@ const PostForm: React.FC<Props> = ({ refreshFeed }) => {
               setVideo(e.target.files ? e.target.files[0] : null)
             }
           />
+        </label>
+
+        {/* ✅ Anonymous checkbox */}
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={anonymous}
+            onChange={(e) => setAnonymous(e.target.checked)}
+          />
+          Post as Anonymous
         </label>
       </div>
 

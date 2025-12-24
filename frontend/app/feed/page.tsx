@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/utils/api";                // ✅ axios instance
-import StatusCard from "@/components/StatusCard";
 import PostForm from "@/components/PostForm";
 import SilverButton from "@/components/SilverButton";
 
@@ -14,13 +13,14 @@ interface Comment {
 
 interface Status {
   _id: string;
-  UserId?: { _id: string; name: string };
-  Text: string;
-  Image?: string[];
-  Video?: string;
-  Likes?: string[];
-  Shares?: string[];
-  Comments?: Comment[];
+  owner?: { _id: string; username: string; profileImage?: string }; // ✅ backend থেকে আসবে
+  content: string;
+  image?: string[];
+  video?: string;
+  likes?: string[];
+  shares?: string[];
+  comments?: Comment[];
+  anonymous?: boolean; // ✅ নতুন field
   createdAt: string;
 }
 
@@ -42,9 +42,8 @@ const FeedPage: React.FC = () => {
       }
 
       // ✅ use api instance
-      const res = await api.get("/status");
-      // backend consistency: if response is { statuses: [...] }
-      const statuses = res.data.statuses || res.data;
+      const res = await api.get("/posts"); // backend route অনুযায়ী
+      const statuses = res.data.posts || res.data;
       setFeed(statuses);
     } catch (err: any) {
       console.error("❌ Feed fetch error:", err);
@@ -84,7 +83,45 @@ const FeedPage: React.FC = () => {
 
       <div className="feed-list space-y-4 mt-4">
         {feed.map((status) => (
-          <StatusCard key={status._id} status={status} refreshFeed={fetchFeed} />
+          <div
+            key={status._id}
+            className="status-card border rounded p-4 bg-gray-800 shadow"
+          >
+            {/* ✅ Anonymous হলে শুধু নাম দেখাবে */}
+            {status.anonymous ? (
+              <span className="font-bold text-gray-400">Anonymous</span>
+            ) : (
+              <button
+                onClick={() => router.push(`/profile/${status.owner?._id}`)}
+                className="font-bold text-purple-400 hover:underline"
+              >
+                {status.owner?.username}
+              </button>
+            )}
+
+            <p className="mt-2">{status.content}</p>
+
+            {status.image && status.image.length > 0 && (
+              <div className="mt-2">
+                {status.image.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    alt="post image"
+                    className="rounded mb-2"
+                  />
+                ))}
+              </div>
+            )}
+
+            {status.video && (
+              <video
+                src={status.video}
+                controls
+                className="rounded mt-2"
+              />
+            )}
+          </div>
         ))}
       </div>
     </div>

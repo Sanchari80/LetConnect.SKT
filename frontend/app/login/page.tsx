@@ -31,7 +31,7 @@ export default function LoginPage() {
       if (data.token) localStorage.setItem("token", data.token);
       if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 
-      setMessage("✅ Login successful! Redirecting...");
+      setMessage("OMG! You come back ,Really! Login successful! Let's Go...");
       setTimeout(() => router.push("/feed"), 1500);
     } catch (err: any) {
       console.error("❌ Login error:", err.response?.data || err.message);
