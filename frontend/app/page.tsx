@@ -38,12 +38,13 @@ export default function Page() {
       <footer className="mt-16 px-6 py-8 flex flex-col items-center bg-gray-800 text-white">
         {/* Logo on top */}
         <Image
-          src="/skt-logo.jpg"
-          alt="SKT Logo"
-          width={80}
-          height={80}
-          className="mb-3 skt-footer-logo"
-        />
+  src="/skt-logo.jpg"   // ✅ must be inside /public
+  alt="SKT Logo"
+  width={80}
+  height={80}
+  priority              // ✅ ensures it loads immediately
+  className="mb-3 skt-footer-logo"
+/>
 
         {/* Text below logo */}
         <p className="text-sm italic tracking-widest">

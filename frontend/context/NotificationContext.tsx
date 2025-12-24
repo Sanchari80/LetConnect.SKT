@@ -40,13 +40,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const res = await api.get("/notifications");
 
-      // ✅ নতুন notification এলে sound বাজবে (যদি mute না থাকে)
-      if (res.data.length > notifications.length && soundEnabled) {
-        const audio = new Audio("/new-notification-022-370046 (1).mp3"); // public folder path
-        audio.play().catch((err) => console.error("Audio play error:", err));
-      }
+      if (res.data.success) {
+        const newNotifications: Notification[] = res.data.notifications;
 
-      setNotifications(res.data);
+        // ✅ নতুন notification এলে sound বাজবে (যদি mute না থাকে)
+        if (newNotifications.length > notifications.length && soundEnabled) {
+          const audio = new Audio("/new-notification.mp3"); // public folder path
+          audio.play().catch((err) => console.error("Audio play error:", err));
+        }
+
+        setNotifications(newNotifications);
+      }
     } catch (err) {
       console.error("❌ Notification fetch error:", err);
     }
@@ -56,7 +60,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 10000); // প্রতি 10s এ check
     return () => clearInterval(interval);
-  }, [notifications, soundEnabled]);
+  }, [soundEnabled]); // ✅ notifications dependency বাদ দেওয়া হলো
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -64,7 +68,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, refresh: fetchNotifications, soundEnabled, toggleSound }}
+      value={{
+        notifications,
+        unreadCount,
+        refresh: fetchNotifications,
+        soundEnabled,
+        toggleSound,
+      }}
     >
       {children}
     </NotificationContext.Provider>

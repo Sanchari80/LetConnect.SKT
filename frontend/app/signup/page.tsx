@@ -35,15 +35,20 @@ export default function SignupPage() {
         password: formData.password.trim(),
       });
 
-      console.log("✅ Signup response:", res.data);
+      const data = res.data;
+      console.log("✅ Signup response:", data);
 
-      setMessage("✅ Signup successful! Redirecting...");
-      setTimeout(() => router.push("/login"), 1500);
+      if (data.success) {
+        setMessage("✅ Signup successful! Welcome aboard...");
+        setTimeout(() => router.push("/login"), 1500);
+      } else {
+        setMessage(`❌ Signup failed: ${data.message || "Please try again."}`);
+      }
     } catch (err: any) {
       console.error("❌ Signup error:", err.response?.data || err.message);
       setMessage(
         `❌ Signup failed: ${
-          err.response?.data?.error || "Please try again."
+          err.response?.data?.message || "Please try again."
         }`
       );
     } finally {

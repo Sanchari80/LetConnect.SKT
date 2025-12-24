@@ -28,11 +28,15 @@ export default function LoginPage() {
       const data = res.data;
       console.log("✅ Login response:", data);
 
-      if (data.token) localStorage.setItem("token", data.token);
-      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.success && data.token) {
+        localStorage.setItem("token", data.token);
+        if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 
-      setMessage("OMG! You come back ,Really! Login successful! Let's Go...");
-      setTimeout(() => router.push("/feed"), 1500);
+        setMessage("✅ Login successful! Let's Go...");
+        setTimeout(() => router.push("/feed"), 1500);
+      } else {
+        setMessage(data.message || "❌ Login failed. Please check your email and password.");
+      }
     } catch (err: any) {
       console.error("❌ Login error:", err.response?.data || err.message);
       setMessage("❌ Login failed. Please check your email and password.");

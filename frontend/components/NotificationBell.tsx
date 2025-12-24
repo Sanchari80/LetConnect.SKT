@@ -1,9 +1,19 @@
 import React, { useState } from "react";
+import api from "../utils/api";
 import { useNotifications } from "../context/NotificationContext"; // 👈 Context import
 
 const NotificationBell: React.FC = () => {
-  const { notifications, unreadCount, soundEnabled, toggleSound } = useNotifications();
+  const { notifications, unreadCount, soundEnabled, toggleSound, refresh } = useNotifications();
   const [open, setOpen] = useState(false);
+
+  const markAsRead = async (id: string) => {
+    try {
+      await api.post(`/notifications/${id}/read`);
+      refresh(); // ✅ context refresh করবে
+    } catch (err) {
+      console.error("❌ Mark as read error:", err);
+    }
+  };
 
   return (
     <div className="relative">
@@ -39,13 +49,14 @@ const NotificationBell: React.FC = () => {
             notifications.map((n) => (
               <div
                 key={n._id}
-                className={`p-2 mb-1 rounded ${
+                onClick={() => markAsRead(n._id)}
+                className={`p-2 mb-1 rounded cursor-pointer ${
                   n.isRead ? "bg-gray-100" : "bg-purple-100"
                 }`}
               >
                 <p className="text-sm">
                   <strong>{n.fromUser?.username || "Someone"}</strong>{" "}
-                  {n.message}
+                  {n.message || "New activity"}
                 </p>
                 <span className="text-xs text-gray-500">
                   {new Date(n.createdAt).toLocaleString()}
