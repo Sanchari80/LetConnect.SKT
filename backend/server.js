@@ -16,9 +16,9 @@ const { Server } = require("socket.io");
 // ==========================
 // ✅ Models
 // ==========================
-const Conversation = require("./models/conversation");
-const Message = require("./models/message");
-const Status = require("./models/status");
+const Conversation = require("./models/Conversation");
+const Message = require("./models/message");   // ✅ lowercase filename
+   // ✅ uppercase filename
 
 // ==========================
 // ✅ Express + HTTP Server
@@ -30,9 +30,9 @@ const server = http.createServer(app);
 // ✅ Allowed Origins (dynamic)
 // ==========================
 const allowedOrigins = [
-  "https://let-connect-skt.vercel.app", // Production domain
-  "https://let-connect-skt-66s3.vercel.app", // Preview domain
-  "https://let-connect-o77rtmuo5-sanchari80s-projects.vercel.app" // Current preview domain
+  "https://let-connect-skt.vercel.app",
+  "https://let-connect-skt-66s3.vercel.app",
+  "https://let-connect-o77rtmuo5-sanchari80s-projects.vercel.app"
 ];
 
 if (process.env.NODE_ENV === "development") {
@@ -76,7 +76,6 @@ const messagePath = path.join(uploadBase, "messages");
   }
 });
 
-// ✅ Static serve for uploads
 app.use("/uploads", express.static(uploadBase));
 
 // ==========================
@@ -106,12 +105,8 @@ app.use("/api/status", require("./routes/statusRoutes"));
 app.use("/api/connect", require("./routes/connectRoutes"));
 app.use("/api/conversation", require("./routes/conversation"));
 app.use("/api/post", require("./routes/post"));
-
-// 🔔 Notifications (user-specific + admin control)
 app.use("/api/notifications", require("./routes/notification"));
 app.use("/api/admin", require("./routes/adminControl"));
-
-// 📢 Advertise system
 app.use("/api/advertise", require("./routes/advertise"));
 
 // ==========================
@@ -147,7 +142,7 @@ io.on("connection", (socket) => {
 
   socket.on("sendMessage", async (msg) => {
     try {
-      if (!msg.text?.trim()) return; // ✅ prevent empty messages
+      if (!msg.text?.trim()) return;
 
       let convo = await Conversation.findOne({
         participants: { $all: [msg.sender, msg.to] },
