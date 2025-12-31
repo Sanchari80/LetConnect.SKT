@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@utils/api"; // ✅ axios instance with interceptor
+import api from "@utils/api";
 
 export default function SignupPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
+    Name: "",
+    Email: "",
+    Password: "",
     confirmPassword: "",
   });
   const [message, setMessage] = useState("");
@@ -20,32 +20,29 @@ export default function SignupPage() {
     setLoading(true);
     setMessage("");
 
-    if (formData.password.trim() !== formData.confirmPassword.trim()) {
+    if (formData.Password.trim() !== formData.confirmPassword.trim()) {
       setMessage("❌ Passwords do not match");
       setLoading(false);
       return;
     }
 
     try {
-      console.log("Using API URL:", process.env.NEXT_PUBLIC_API_URL);
-
       const res = await api.post("/auth/signup", {
-        username: formData.username.trim(),
-        email: formData.email.trim(),
-        password: formData.password.trim(),
+        Name: formData.Name.trim(),
+        Email: formData.Email.trim(),
+        Password: formData.Password.trim(),
       });
 
       const data = res.data;
-      console.log("✅ Signup response:", data);
 
       if (data.success) {
-        setMessage("✅ Signup successful! Welcome aboard...");
+        // ✅ তোমার custom signup message
+        setMessage("OMG! You are here ?? Signup successful! Welcome aboard...");
         setTimeout(() => router.push("/login"), 1500);
       } else {
         setMessage(`❌ Signup failed: ${data.message || "Please try again."}`);
       }
     } catch (err: any) {
-      console.error("❌ Signup error:", err.response?.data || err.message);
       setMessage(
         `❌ Signup failed: ${
           err.response?.data?.message || "Please try again."
@@ -62,30 +59,26 @@ export default function SignupPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
           type="text"
-          placeholder="Username"
-          value={formData.username}
-          onChange={(e) =>
-            setFormData({ ...formData, username: e.target.value })
-          }
+          placeholder="Name"
+          value={formData.Name}
+          onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
           required
           className="border p-2 rounded bg-gray-800 text-white"
         />
         <input
           type="email"
           placeholder="Email"
-          value={formData.email}
-          onChange={(e) =>
-            setFormData({ ...formData, email: e.target.value })
-          }
+          value={formData.Email}
+          onChange={(e) => setFormData({ ...formData, Email: e.target.value })}
           required
           className="border p-2 rounded bg-gray-800 text-white"
         />
         <input
           type="password"
           placeholder="Password"
-          value={formData.password}
+          value={formData.Password}
           onChange={(e) =>
-            setFormData({ ...formData, password: e.target.value })
+            setFormData({ ...formData, Password: e.target.value })
           }
           required
           className="border p-2 rounded bg-gray-800 text-white"
@@ -114,7 +107,7 @@ export default function SignupPage() {
       {message && (
         <p
           className={`mt-6 text-center ${
-            message.startsWith("✅") ? "text-green-400" : "text-red-400"
+            message.startsWith("❌") ? "text-red-400" : "text-green-400"
           }`}
         >
           {message}

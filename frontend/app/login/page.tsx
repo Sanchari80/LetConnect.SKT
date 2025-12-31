@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@utils/api"; // ✅ axios instance with interceptor
+import api from "@utils/api";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ Email: "", Password: "" });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -15,30 +15,30 @@ export default function LoginPage() {
     setLoading(true);
     setMessage("");
 
-    if (!formData.email.trim() || !formData.password.trim()) {
+    if (!formData.Email.trim() || !formData.Password.trim()) {
       setMessage("❌ All fields are required");
       setLoading(false);
       return;
     }
 
     try {
-      console.log("Using API URL:", process.env.NEXT_PUBLIC_API_URL);
-
       const res = await api.post("/auth/login", formData);
       const data = res.data;
-      console.log("✅ Login response:", data);
 
       if (data.success && data.token) {
         localStorage.setItem("token", data.token);
         if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 
-        setMessage("✅ Login successful! Let's Go...");
+        // ✅ তোমার custom login message
+        setMessage("Yeah! You are back! Login successful! Let's Go...");
         setTimeout(() => router.push("/feed"), 1500);
       } else {
-        setMessage(data.message || "❌ Login failed. Please check your email and password.");
+        setMessage(
+          data.message ||
+            "❌ Login failed. Please check your email and password."
+        );
       }
     } catch (err: any) {
-      console.error("❌ Login error:", err.response?.data || err.message);
       setMessage("❌ Login failed. Please check your email and password.");
     } finally {
       setLoading(false);
@@ -52,17 +52,17 @@ export default function LoginPage() {
         <input
           type="email"
           placeholder="Email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          value={formData.Email}
+          onChange={(e) => setFormData({ ...formData, Email: e.target.value })}
           required
           className="border p-2 rounded bg-gray-800 text-white"
         />
         <input
           type="password"
           placeholder="Password"
-          value={formData.password}
+          value={formData.Password}
           onChange={(e) =>
-            setFormData({ ...formData, password: e.target.value })
+            setFormData({ ...formData, Password: e.target.value })
           }
           required
           className="border p-2 rounded bg-gray-800 text-white"
@@ -88,7 +88,7 @@ export default function LoginPage() {
       {message && (
         <p
           className={`mt-6 text-center ${
-            message.startsWith("✅") ? "text-green-400" : "text-red-400"
+            message.startsWith("❌") ? "text-red-400" : "text-green-400"
           }`}
         >
           {message}
