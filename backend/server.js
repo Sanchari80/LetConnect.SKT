@@ -16,9 +16,9 @@ const { Server } = require("socket.io");
 // ==========================
 // ✅ Models
 // ==========================
-const Conversation = require("./models/Conversation");
-const Message = require("./models/Message");
-const Status = require("./models/Status");
+const Conversation = require("./models/conversation");
+const Message = require("./models/message");
+const Status = require("./models/status");
 
 // ==========================
 // ✅ Express + HTTP Server
