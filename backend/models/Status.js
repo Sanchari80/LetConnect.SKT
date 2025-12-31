@@ -1,13 +1,13 @@
 const mongoose = require("mongoose");
 
-// Comment sub-schema
+// ✅ Comment sub-schema
 const CommentSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   text: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
 });
 
-// Main Status schema
+// ✅ Main Status schema
 const StatusSchema = new mongoose.Schema({
   UserId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -18,26 +18,21 @@ const StatusSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
-  // ✅ Multiple images allowed
   Image: {
     type: [String],
     default: []
   },
-  // ✅ Single video
   Video: {
     type: String,
     default: ""
   },
-  // ✅ Likes (array of users)
   Likes: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
     }
   ],
-  // ✅ Comments (array of CommentSchema)
   Comments: [CommentSchema],
-  // ✅ Shares (array of users)
   Shares: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -50,4 +45,5 @@ const StatusSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model("Status", StatusSchema);
+// ✅ Safe export to prevent OverwriteModelError
+module.exports = mongoose.models.Status || mongoose.model("Status", StatusSchema);
