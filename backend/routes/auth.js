@@ -17,14 +17,14 @@ const escapeRegex = (str) =>
   str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const caseInsensitiveEmailQuery = (email) => ({
-  email: new RegExp("^" + escapeRegex(email) + "$", "i"),
+  Email: new RegExp("^" + escapeRegex(email) + "$", "i"),
 });
 
-const sanitizeUser = async (id) => User.findById(id).select("-password");
+const sanitizeUser = async (id) => User.findById(id).select("-Password");
 
 // ✅ Admin guard
 function checkAdmin(req, res, next) {
-  if (req.user && req.user.role === "admin") return next();
+  if (req.user && req.user.Role === "admin") return next();
   return res.status(403).json({ success: false, message: "Forbidden: Admins only" });
 }
 
@@ -33,30 +33,30 @@ function checkAdmin(req, res, next) {
 // ==========================
 router.post("/signup", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { Name, Email, Password } = req.body;
 
-    if (!username || !email || !password) {
+    if (!Name || !Email || !Password) {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne(caseInsensitiveEmailQuery(email));
+    const existingUser = await User.findOne(caseInsensitiveEmailQuery(Email));
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(Password, 10);
 
     const user = new User({
-      username,
-      email,
-      password: hashedPassword,
-      role: "user",
+      Name,
+      Email,
+      Password: hashedPassword,
+      Role: "user",
     });
 
     await user.save();
     const safeUser = await sanitizeUser(user._id);
 
-    const token = signJwt({ id: user._id, email: user.email, role: user.role });
+    const token = signJwt({ id: user._id, Email: user.Email, Role: user.Role });
 
     res.status(201).json({ success: true, message: "Signup successful", token, user: safeUser });
   } catch (err) {
@@ -70,27 +70,27 @@ router.post("/signup", async (req, res) => {
 // ==========================
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { Email, Password } = req.body;
 
-    if (!email || !password) {
+    if (!Email || !Password) {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
-    console.log("Login attempt:", email);
+    console.log("Login attempt:", Email);
 
-    const user = await User.findOne(caseInsensitiveEmailQuery(email));
+    const user = await User.findOne(caseInsensitiveEmailQuery(Email));
     if (!user) {
-      console.log("❌ No user found for:", email);
+      console.log("❌ No user found for:", Email);
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(Password, user.Password);
     if (!isMatch) {
-      console.log("❌ Password mismatch for:", email);
+      console.log("❌ Password mismatch for:", Email);
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
-    const token = signJwt({ id: user._id, email: user.email, role: user.role });
+    const token = signJwt({ id: user._id, Email: user.Email, Role: user.Role });
     const safeUser = await sanitizeUser(user._id);
 
     res.json({ success: true, message: "Login successful", token, user: safeUser });
@@ -128,10 +128,10 @@ router.put("/change-password", verifyToken, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    const isMatch = await bcrypt.compare(oldPassword, user.Password);
     if (!isMatch) return res.status(401).json({ success: false, message: "Old password incorrect" });
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.Password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     res.json({ success: true, message: "Password changed successfully" });
@@ -146,10 +146,10 @@ router.put("/change-password", verifyToken, async (req, res) => {
 // ==========================
 router.post("/forgot-password", async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: "Email is required" });
+    const { Email } = req.body;
+    if (!Email) return res.status(400).json({ success: false, message: "Email is required" });
 
-    const user = await User.findOne(caseInsensitiveEmailQuery(email));
+    const user = await User.findOne(caseInsensitiveEmailQuery(Email));
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
     const token = signJwt({ id: user._id }, "1h");
@@ -162,7 +162,7 @@ router.post("/forgot-password", async (req, res) => {
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
-      to: email,
+      to: Email,
       subject: "Password Reset",
       text: `Click here to reset your password: ${resetLink}`,
     });
@@ -192,7 +192,7 @@ router.put("/reset-password/:token", async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.Password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     res.json({ success: true, message: "Password reset successful" });
@@ -207,7 +207,7 @@ router.put("/reset-password/:token", async (req, res) => {
 // ==========================
 router.get("/admin/dashboard", verifyToken, checkAdmin, async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find().select("-Password");
     res.json({ success: true, message: "Admin dashboard", users });
   } catch (err) {
     console.error("❌ Admin route error:", err.message);
