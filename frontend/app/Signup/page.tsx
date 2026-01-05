@@ -28,7 +28,8 @@ export default function SignupPage() {
     }
 
     try {
-      const res = await api.post("/auth/signup", {
+      // ✅ Corrected API path to match backend
+      const res = await api.post("/api/auth/signup", {
         Name: formData.Name.trim(),
         Email: formData.Email.trim(),
         Password: formData.Password.trim(),
