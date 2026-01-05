@@ -12,7 +12,7 @@ const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" } // 7 days expiry
+    { expiresIn: "7d" }
   );
 };
 
@@ -23,38 +23,40 @@ exports.signup = async (req, res) => {
   try {
     console.log("📩 Signup REQ BODY:", req.body);
 
-    const { name, email, password } = req.body;
+    // match frontend keys (Name, Email, Password)
+    const { Name, Email, Password } = req.body;
 
-    // Basic validation
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: "Email and password are required" });
+    if (!Email || !Password) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ All fields are required",
+      });
     }
 
-    // Check if user already exists
-    const exists = await User.findOne({ email });
+    const exists = await User.findOne({ email: Email });
     if (exists) {
-      return res.status(409).json({ success: false, message: "Email already in use" });
+      return res.status(409).json({
+        success: false,
+        message: "❌ Email already in use",
+      });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(Password, 10);
 
-    // Create new user (always role=user)
     const user = new User({
-      name: name || "Anonymous",
-      email,
+      name: Name || "Anonymous",
+      email: Email,
       password: hashedPassword,
-      role: "user", // 👈 enforce user role
+      role: "user",
     });
 
     await user.save();
 
-    // Generate JWT
     const token = generateToken(user);
 
     res.status(201).json({
       success: true,
-      message: "Signup successful",
+      message: "OMG! You are here ?? Signup successful! Welcome aboard...",
       token,
       user: {
         id: user._id,
@@ -65,7 +67,10 @@ exports.signup = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Signup error:", err.message);
-    res.status(500).json({ success: false, message: "Signup failed" });
+    res.status(500).json({
+      success: false,
+      message: "❌ Signup failed: Please try again.",
+    });
   }
 };
 
@@ -76,31 +81,37 @@ exports.login = async (req, res) => {
   try {
     console.log("📩 Login REQ BODY:", req.body);
 
-    const { email, password } = req.body;
+    // match frontend keys (Email, Password)
+    const { Email, Password } = req.body;
 
-    // Basic validation
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: "Email and password are required" });
+    if (!Email || !Password) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ All fields are required",
+      });
     }
 
-    // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: Email });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "❌ User not found",
+      });
     }
 
-    // Compare password
-    const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(Password, user.password);
     if (!match) {
-      return res.status(401).json({ success: false, message: "Invalid password" });
+      return res.status(401).json({
+        success: false,
+        message: "❌ Login failed. Please check your email and password.",
+      });
     }
 
-    // Generate JWT
     const token = generateToken(user);
 
     res.json({
       success: true,
-      message: ""OMG! You come back ,Really! Login successful! Let's Go..."",
+      message: "Yeah! You are back! Login successful! Let's Go...",
       token,
       user: {
         id: user._id,
@@ -111,6 +122,9 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Login error:", err.message);
-    res.status(500).json({ success: false, message: "Login failed" });
+    res.status(500).json({
+      success: false,
+      message: "❌ Login failed: Please try again.",
+    });
   }
 };
