@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs"); // ✅ use bcryptjs everywhere
 const jwt = require("jsonwebtoken");
 
 // ==========================
@@ -15,6 +15,11 @@ const generateToken = (user) => {
     { expiresIn: "7d" }
   );
 };
+
+// ✅ Case-insensitive Email query
+const caseInsensitiveEmailQuery = (email) => ({
+  Email: new RegExp("^" + email + "$", "i"),
+});
 
 // ==========================
 // ✅ Signup Controller
@@ -32,8 +37,9 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // ✅ Use capitalized field name from schema
-    const exists = await User.findOne({ Email: Email });
+    const exists = await User.findOne(caseInsensitiveEmailQuery(Email));
+    console.log("🔍 Existing user check:", exists);
+
     if (exists) {
       return res.status(409).json({
         success: false,
@@ -45,18 +51,19 @@ exports.signup = async (req, res) => {
 
     const user = new User({
       Name: Name || "Anonymous",
-      Email: Email,
+      Email,
       Password: hashedPassword,
       Role: "user",
     });
 
     await user.save();
+    console.log("✅ New user saved:", user);
 
     const token = generateToken(user);
 
     res.status(201).json({
       success: true,
-      message: "OMG! You are here ?? Signup successful! Welcome Dear...",
+      message: "🎉 Signup successful! Welcome aboard, vibe coder!",
       token,
       user: {
         id: user._id,
@@ -90,8 +97,11 @@ exports.login = async (req, res) => {
       });
     }
 
-    // ✅ Use capitalized field name from schema
-    const user = await User.findOne({ Email: Email });
+    console.log("Login attempt with Email:", Email);
+
+    const user = await User.findOne(caseInsensitiveEmailQuery(Email));
+    console.log("User found in DB:", user);
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -100,6 +110,8 @@ exports.login = async (req, res) => {
     }
 
     const match = await bcrypt.compare(Password, user.Password);
+    console.log("Password match result:", match);
+
     if (!match) {
       return res.status(401).json({
         success: false,
@@ -111,7 +123,7 @@ exports.login = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Yeah! You are back! Login successful! Let's Go...",
+      message: "💚 Login successful! Welcome back, vibe coder!",
       token,
       user: {
         id: user._id,

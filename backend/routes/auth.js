@@ -33,15 +33,19 @@ function checkAdmin(req, res, next) {
 // ==========================
 router.post("/signup", async (req, res) => {
   try {
+    console.log("📩 Signup REQ BODY:", req.body);
+
     const { Name, Email, Password } = req.body;
 
     if (!Name || !Email || !Password) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+      return res.status(400).json({ success: false, message: "❌ All fields are required" });
     }
 
     const existingUser = await User.findOne(caseInsensitiveEmailQuery(Email));
+    console.log("🔍 Existing user check:", existingUser);
+
     if (existingUser) {
-      return res.status(400).json({ success: false, message: "User already exists" });
+      return res.status(400).json({ success: false, message: "❌ User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(Password, 10);
@@ -54,14 +58,20 @@ router.post("/signup", async (req, res) => {
     });
 
     await user.save();
-    const safeUser = await sanitizeUser(user._id);
+    console.log("✅ New user saved:", user);
 
+    const safeUser = await sanitizeUser(user._id);
     const token = signJwt({ id: user._id, Email: user.Email, Role: user.Role });
 
-    res.status(201).json({ success: true, message: "Signup successful", token, user: safeUser });
+    res.status(201).json({
+      success: true,
+      message: "🎉 Signup successful! Welcome aboard, vibe coder!",
+      token,
+      user: safeUser,
+    });
   } catch (err) {
     console.error("❌ Signup error:", err.message);
-    res.status(500).json({ success: false, message: "Signup failed" });
+    res.status(500).json({ success: false, message: "❌ Signup failed" });
   }
 });
 
@@ -70,33 +80,44 @@ router.post("/signup", async (req, res) => {
 // ==========================
 router.post("/login", async (req, res) => {
   try {
+    console.log("📩 Login REQ BODY:", req.body);
+
     const { Email, Password } = req.body;
 
     if (!Email || !Password) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+      return res.status(400).json({ success: false, message: "❌ All fields are required" });
     }
 
     console.log("Login attempt:", Email);
 
     const user = await User.findOne(caseInsensitiveEmailQuery(Email));
+    console.log("User found in DB:", user);
+
     if (!user) {
       console.log("❌ No user found for:", Email);
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      return res.status(401).json({ success: false, message: "❌ Invalid credentials" });
     }
 
     const isMatch = await bcrypt.compare(Password, user.Password);
+    console.log("Password match result:", isMatch);
+
     if (!isMatch) {
       console.log("❌ Password mismatch for:", Email);
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      return res.status(401).json({ success: false, message: "❌ Invalid credentials" });
     }
 
     const token = signJwt({ id: user._id, Email: user.Email, Role: user.Role });
     const safeUser = await sanitizeUser(user._id);
 
-    res.json({ success: true, message: "Login successful", token, user: safeUser });
+    res.json({
+      success: true,
+      message: "💚 Login successful! Welcome back, vibe coder!",
+      token,
+      user: safeUser,
+    });
   } catch (err) {
     console.error("❌ Login error:", err.message);
-    res.status(500).json({ success: false, message: "Login failed" });
+    res.status(500).json({ success: false, message: "❌ Login failed" });
   }
 });
 
@@ -106,11 +127,11 @@ router.post("/login", async (req, res) => {
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await sanitizeUser(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) return res.status(404).json({ success: false, message: "❌ User not found" });
     res.json({ success: true, user });
   } catch (err) {
     console.error("❌ Me route error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to fetch user" });
+    res.status(500).json({ success: false, message: "❌ Failed to fetch user" });
   }
 });
 
@@ -122,22 +143,22 @@ router.put("/change-password", verifyToken, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
-      return res.status(400).json({ success: false, message: "Both old and new password required" });
+      return res.status(400).json({ success: false, message: "❌ Both old and new password required" });
     }
 
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) return res.status(404).json({ success: false, message: "❌ User not found" });
 
     const isMatch = await bcrypt.compare(oldPassword, user.Password);
-    if (!isMatch) return res.status(401).json({ success: false, message: "Old password incorrect" });
+    if (!isMatch) return res.status(401).json({ success: false, message: "❌ Old password incorrect" });
 
     user.Password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.json({ success: true, message: "Password changed successfully" });
+    res.json({ success: true, message: "🔑 Password changed successfully" });
   } catch (err) {
     console.error("❌ Change password error:", err.message);
-    res.status(500).json({ success: false, message: "Password change failed" });
+    res.status(500).json({ success: false, message: "❌ Password change failed" });
   }
 });
 
@@ -147,10 +168,10 @@ router.put("/change-password", verifyToken, async (req, res) => {
 router.post("/forgot-password", async (req, res) => {
   try {
     const { Email } = req.body;
-    if (!Email) return res.status(400).json({ success: false, message: "Email is required" });
+    if (!Email) return res.status(400).json({ success: false, message: "❌ Email is required" });
 
     const user = await User.findOne(caseInsensitiveEmailQuery(Email));
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) return res.status(404).json({ success: false, message: "❌ User not found" });
 
     const token = signJwt({ id: user._id }, "1h");
     const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
@@ -167,10 +188,10 @@ router.post("/forgot-password", async (req, res) => {
       text: `Click here to reset your password: ${resetLink}`,
     });
 
-    res.json({ success: true, message: "Reset link sent to your email" });
+    res.json({ success: true, message: "📧 Reset link sent to your email" });
   } catch (err) {
     console.error("❌ Forgot password error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to send reset link" });
+    res.status(500).json({ success: false, message: "❌ Failed to send reset link" });
   }
 });
 
@@ -182,23 +203,23 @@ router.put("/reset-password/:token", async (req, res) => {
     const { token } = req.params;
     const { newPassword } = req.body;
 
-    if (!newPassword) return res.status(400).json({ success: false, message: "New password is required" });
+    if (!newPassword) return res.status(400).json({ success: false, message: "❌ New password is required" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded || !decoded.id) {
-      return res.status(400).json({ success: false, message: "Invalid or expired token" });
+      return res.status(400).json({ success: false, message: "❌ Invalid or expired token" });
     }
 
     const user = await User.findById(decoded.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) return res.status(404).json({ success: false, message: "❌ User not found" });
 
     user.Password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.json({ success: true, message: "Password reset successful" });
+    res.json({ success: true, message: "✅ Password reset successful" });
   } catch (err) {
     console.error("❌ Reset password error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to reset password" });
+    res.status(500).json({ success: false, message: "❌ Failed to reset password" });
   }
 });
 
@@ -208,10 +229,10 @@ router.put("/reset-password/:token", async (req, res) => {
 router.get("/admin/dashboard", verifyToken, checkAdmin, async (req, res) => {
   try {
     const users = await User.find().select("-Password");
-    res.json({ success: true, message: "Admin dashboard", users });
+    res.json({ success: true, message: "📊 Admin dashboard", users });
   } catch (err) {
     console.error("❌ Admin route error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to fetch admin data" });
+    res.status(500).json({ success: false, message: "❌ Failed to fetch admin data" });
   }
 });
 
