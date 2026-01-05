@@ -12,6 +12,7 @@ const UserSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true, // ✅ সব email lowercase হবে
+      trim: true,
     },
     Password: {
       type: String,
@@ -42,17 +43,17 @@ const UserSchema = new mongoose.Schema(
     },
     Contact: {
       type: String,
+      trim: true,
     },
     Blocked: {
       type: Boolean, // ✅ admin block/unblock করতে পারবে
       default: false,
     },
-    CreatedAt: {
-      type: Date,
-      default: Date.now,
-    },
   },
-  { collection: "users" }
+  {
+    collection: "users",
+    timestamps: true, // ✅ createdAt & updatedAt auto add হবে
+  }
 );
 
 // ✅ Indexes for faster search (capitalized fields)
