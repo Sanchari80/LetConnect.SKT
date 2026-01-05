@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@utils/api";
+import LoadingButton from "@/components/LoadingButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,7 +30,6 @@ export default function LoginPage() {
         localStorage.setItem("token", data.token);
         if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 
-        // ✅ তোমার custom login message
         setMessage("Yeah! You are back! Login successful! Let's Go...");
         setTimeout(() => router.push("/feed"), 1500);
       } else {
@@ -67,15 +67,15 @@ export default function LoginPage() {
           required
           className="border p-2 rounded bg-gray-800 text-white"
         />
-        <button
+
+        {/* ✅ Updated to use LoadingButton */}
+        <LoadingButton
           type="submit"
-          disabled={loading}
-          className={`bg-green-600 hover:bg-green-700 text-white py-2 rounded transition ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          loading={loading}
+          className="bg-green-600 hover:bg-green-700 py-2 rounded"
         >
-          {loading ? "Logging in..." : "Login"}
-        </button>
+          Login
+        </LoadingButton>
       </form>
 
       <p

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@utils/api";
+import LoadingButton from "@/components/LoadingButton";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -36,8 +37,7 @@ export default function SignupPage() {
       const data = res.data;
 
       if (data.success) {
-        // ✅ তোমার custom signup message
-        setMessage("OMG! You are here ?? Signup successful! Welcome aboard...");
+        setMessage("OMG! You are here ?? Signup successful! Welcome Dear...");
         setTimeout(() => router.push("/login"), 1500);
       } else {
         setMessage(`❌ Signup failed: ${data.message || "Please try again."}`);
@@ -93,15 +93,15 @@ export default function SignupPage() {
           required
           className="border p-2 rounded bg-gray-800 text-white"
         />
-        <button
+
+        {/* ✅ Updated to use LoadingButton */}
+        <LoadingButton
           type="submit"
-          disabled={loading}
-          className={`bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          loading={loading}
+          className="bg-blue-600 hover:bg-blue-700 py-2 rounded"
         >
-          {loading ? "Signing up..." : "Signup"}
-        </button>
+          Signup
+        </LoadingButton>
       </form>
 
       {message && (
