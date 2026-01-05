@@ -25,7 +25,7 @@ const sanitizeUser = async (id) => User.findById(id).select("-Password");
 // ✅ Admin guard
 function checkAdmin(req, res, next) {
   if (req.user && req.user.Role === "admin") return next();
-  return res.status(403).json({ success: false, message: "Forbidden: Admins only" });
+  return res.status(403).json({ success: false, message: "❌ Forbidden: Admins only" });
 }
 
 // ==========================
@@ -45,7 +45,7 @@ router.post("/signup", async (req, res) => {
     console.log("🔍 Existing user check:", existingUser);
 
     if (existingUser) {
-      return res.status(400).json({ success: false, message: "❌ User already exists" });
+      return res.status(400).json({ success: false, message: "❌ Email already in use" });
     }
 
     const hashedPassword = await bcrypt.hash(Password, 10);
@@ -65,13 +65,13 @@ router.post("/signup", async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "🎉 Signup successful! Welcome aboard, vibe coder!",
+      message: "OMG! You are here ?? Signup successful! Welcome Dear...",
       token,
       user: safeUser,
     });
   } catch (err) {
     console.error("❌ Signup error:", err.message);
-    res.status(500).json({ success: false, message: "❌ Signup failed" });
+    res.status(500).json({ success: false, message: "❌ Signup failed. Please try again." });
   }
 });
 
@@ -95,7 +95,7 @@ router.post("/login", async (req, res) => {
 
     if (!user) {
       console.log("❌ No user found for:", Email);
-      return res.status(401).json({ success: false, message: "❌ Invalid credentials" });
+      return res.status(401).json({ success: false, message: "❌ Login failed. Please check your email and password." });
     }
 
     const isMatch = await bcrypt.compare(Password, user.Password);
@@ -103,7 +103,7 @@ router.post("/login", async (req, res) => {
 
     if (!isMatch) {
       console.log("❌ Password mismatch for:", Email);
-      return res.status(401).json({ success: false, message: "❌ Invalid credentials" });
+      return res.status(401).json({ success: false, message: "❌ Login failed. Please check your email and password." });
     }
 
     const token = signJwt({ id: user._id, Email: user.Email, Role: user.Role });
@@ -111,13 +111,13 @@ router.post("/login", async (req, res) => {
 
     res.json({
       success: true,
-      message: "💚 Login successful! Welcome back, vibe coder!",
+      message: "Yeah! You are back! Login successful! Let's Go...",
       token,
       user: safeUser,
     });
   } catch (err) {
     console.error("❌ Login error:", err.message);
-    res.status(500).json({ success: false, message: "❌ Login failed" });
+    res.status(500).json({ success: false, message: "❌ Login failed. Please try again." });
   }
 });
 
