@@ -10,7 +10,7 @@ const generateToken = (user) => {
     throw new Error("JWT_SECRET not configured");
   }
   return jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user._id, role: user.Role },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -23,7 +23,6 @@ exports.signup = async (req, res) => {
   try {
     console.log("📩 Signup REQ BODY:", req.body);
 
-    // match frontend keys (Name, Email, Password)
     const { Name, Email, Password } = req.body;
 
     if (!Email || !Password) {
@@ -33,7 +32,8 @@ exports.signup = async (req, res) => {
       });
     }
 
-    const exists = await User.findOne({ email: Email });
+    // ✅ Use capitalized field name from schema
+    const exists = await User.findOne({ Email: Email });
     if (exists) {
       return res.status(409).json({
         success: false,
@@ -44,10 +44,10 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(Password, 10);
 
     const user = new User({
-      name: Name || "Anonymous",
-      email: Email,
-      password: hashedPassword,
-      role: "user",
+      Name: Name || "Anonymous",
+      Email: Email,
+      Password: hashedPassword,
+      Role: "user",
     });
 
     await user.save();
@@ -56,13 +56,13 @@ exports.signup = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "OMG! You are here ?? Signup successful! Welcome aboard...",
+      message: "OMG! You are here ?? Signup successful! Welcome Dear...",
       token,
       user: {
         id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        Name: user.Name,
+        Email: user.Email,
+        Role: user.Role,
       },
     });
   } catch (err) {
@@ -81,7 +81,6 @@ exports.login = async (req, res) => {
   try {
     console.log("📩 Login REQ BODY:", req.body);
 
-    // match frontend keys (Email, Password)
     const { Email, Password } = req.body;
 
     if (!Email || !Password) {
@@ -91,7 +90,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: Email });
+    // ✅ Use capitalized field name from schema
+    const user = await User.findOne({ Email: Email });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -99,7 +99,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    const match = await bcrypt.compare(Password, user.password);
+    const match = await bcrypt.compare(Password, user.Password);
     if (!match) {
       return res.status(401).json({
         success: false,
@@ -115,9 +115,9 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        Name: user.Name,
+        Email: user.Email,
+        Role: user.Role,
       },
     });
   } catch (err) {
